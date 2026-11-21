@@ -86,6 +86,7 @@
     "ios:release": "bun run extensions:ios-runtime && expo run:ios --configuration Release --no-bundler",
     "ios:ipa": "bun run extensions:ios-runtime && scripts/ipa/build.sh",
     "desktop:dmg": "bun run --cwd desktop dist",
+    "desktop:exe": "bun run --cwd desktop dist:win",
     "web:release": "expo export -p web",
     "release:notes": "bunx git-cliff@2.14.2 --unreleased",
     "codegen": "graphql-codegen",

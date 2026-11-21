@@ -59,6 +59,7 @@ Each one builds from the native project `bun run ios` or `bun run android` (or `
 | `bun run ios:ipa` | `ios/dist/anipoex-<version>.ipa` | ad hoc, with the app's entitlements | installing through SideStore or AltStore |
 | `bun run android:apk` | `android/dist/anipoex-<version>.apk` | the release key | the same APK as a GitHub release |
 | `bun run desktop:dmg` | `desktop/dist/anipoex-<version>-arm64.dmg` | ad hoc | the macOS app, see [desktop/README.md](desktop/README.md#packaged-app) |
+| `bun run desktop:exe` | `desktop/dist/anipoex-<version>-x64-setup.exe` | nothing | the Windows installer, on Windows only, see [desktop/README.md](desktop/README.md#windows) |
 
 - **`android:release`** is signed with the debug key, so it doesn't install over a release APK: uninstall first.
 - **`android:apk`** needs `keystore.properties` at the repo root, next to its `.jks`. Both are ignored by git:
@@ -86,7 +87,7 @@ bun run release:notes -- --tag vX.Y.Z -o notes.md   # edit it before publishing
 gh release create vX.Y.Z --notes-file notes.md
 ```
 
-Publishing the release starts `.github/workflows/release.yml`, which builds the signed APK, an IPA for SideStore and AltStore, and an unsigned DMG for Apple Silicon Macs, and uploads them to the release. The IPA carries no Apple signature: SideStore or AltStore sign it on the device, and find new versions through the `source.json` uploaded beside it, at `https://github.com/anipoex/anipoex/releases/latest/download/source.json`. To rebuild an existing tag, run the workflow on it (`gh workflow run release.yml --ref vX.Y.Z`). The signing key and `.env.local` come from the repo secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ENV_LOCAL`.
+Publishing the release starts `.github/workflows/release.yml`, which builds the signed APK, an IPA for SideStore and AltStore, an unsigned DMG for Apple Silicon Macs and an unsigned Windows installer, and uploads them to the release. The IPA carries no Apple signature: SideStore or AltStore sign it on the device, and find new versions through the `source.json` uploaded beside it, at `https://github.com/anipoex/anipoex/releases/latest/download/source.json`. To rebuild an existing tag, run the workflow on it (`gh workflow run release.yml --ref vX.Y.Z`). The signing key and `.env.local` come from the repo secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ENV_LOCAL`.
 
 </details>
 

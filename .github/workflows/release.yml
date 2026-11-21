@@ -150,3 +150,44 @@ jobs:
           gh release upload "$RELEASE_TAG" "$dmg" --clobber
         env:
           GH_TOKEN: ${{ github.token }}
+
+  # A per-user Windows installer, unsigned: SmartScreen warns on its first run.
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: package.json
+          package-manager-cache: false
+      # The extension server's toolchain and the JVM it bundles.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: zulu
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: bun install --frozen-lockfile
+      - run: bun install --cwd desktop --frozen-lockfile
+      - name: Write .env.local
+        run: printf '%s\n' "$ENV_LOCAL" > .env.local
+        env:
+          ENV_LOCAL: ${{ secrets.ENV_LOCAL }}
+      # The server builds with android/gradlew.bat.
+      - run: bunx expo prebuild --platform android --no-install
+      - run: bun run desktop:exe --publish never -c.extraMetadata.version="${RELEASE_TAG#v}"
+
+      - name: Upload
+        run: |
+          exe="anipoex-$RELEASE_TAG-x64-setup.exe"
+          mv "desktop/dist/anipoex-${RELEASE_TAG#v}-x64-setup.exe" "$exe"
+          gh release upload "$RELEASE_TAG" "$exe" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -22,14 +22,13 @@ export const APP_COMMIT: string | undefined =
 
 /**
  * The release file this app updates from: Android installs the APK itself,
- * iOS hands the IPA to SideStore, the Mac app swaps itself for the DMG's.
- * None in a browser, which always loads the latest.
+ * iOS hands the IPA to SideStore, the desktop app installs the DMG or the
+ * Windows setup over itself. None in a browser, which always loads the latest.
  */
 const UPDATE_FILE = Platform.select({
   android: ".apk",
   ios: ".ipa",
-  // shortcut: the desktop app is Mac-only; Windows needs its own file here.
-  web: desktop ? ".dmg" : undefined,
+  web: desktop && (desktop.platform === "win32" ? "-setup.exe" : ".dmg"),
 });
 
 export const updates$ = observable({
@@ -38,7 +37,7 @@ export const updates$ = observable({
   available: undefined as Update | undefined,
   /** The sheet that offers `available`. */
   open: false,
-  /** How much of the APK or DMG has downloaded, 0 to 1, while it downloads. */
+  /** How much of the update file has downloaded, 0 to 1, while it downloads. */
   progress: undefined as number | undefined,
   /** The version whose APK is downloaded, ready to install. */
   downloaded: undefined as string | undefined,
@@ -81,7 +80,7 @@ let installOnReturn = false;
 
 /**
  * Downloads the offered APK and hands it to Android's installer; the desktop
- * app installs the DMG's and restarts.
+ * app installs the DMG or setup and restarts.
  */
 export async function installUpdate() {
   const update = updates$.available.peek();

@@ -2,6 +2,8 @@ import type { StoredDownload } from "@/features/downloads/utils/paths";
 
 /** What the desktop app's preload exposes as `window.anipoex`. */
 export interface DesktopBridge {
+  /** Node's name for the OS the app runs on: `darwin`, `win32`. */
+  platform: string;
   runtime(
     method: string,
     args: Record<string, unknown>,
@@ -46,8 +48,8 @@ export interface DesktopBridge {
   downloads(method: "get", root: string, path: string): Promise<string>;
   downloads(method: "remove", root: string, path: string): Promise<boolean>;
   /**
-   * Swaps the app for the one in a release's DMG and restarts it; rejects
-   * with the reason when it can't (not in Applications).
+   * Installs a release's DMG (Mac) or setup (Windows) over the app and
+   * restarts it; rejects with the reason when it can't (not in Applications).
    */
   installUpdate(
     url: string,

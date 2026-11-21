@@ -74,7 +74,9 @@ val jlinkRuntime by tasks.registering(Exec::class) {
     // Resolved at execution, so other tasks don't provision a toolchain.
     doFirst {
         output.get().asFile.deleteRecursively()
-        executable(jlink.get().metadata.installationPath.file("bin/jlink").asFile.path)
+        // java's sibling, so Windows gets jlink.exe.
+        val java = jlink.get().executablePath.asFile
+        executable(java.resolveSibling(java.name.replace("java", "jlink")).path)
         args("--add-modules", "java.base,jdk.crypto.ec", "--strip-debug", "--no-header-files", "--no-man-pages", "--output", output.get().asFile.path)
     }
 }

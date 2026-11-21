@@ -2,6 +2,7 @@
 
 ## 2026-11-21
 
+* **A Windows app, which updates itself too**: each release carries a Windows installer, and the Windows app finds it once a day like the others and runs it silently over itself. Updated [App updates](concepts/app-updates.md) and [Settings](stores/settings.md).
 * **The Mac app updates itself**: it looks for the release's DMG once a day like Android and iOS, and its update swaps the app for the DMG's and restarts it. Updated [App updates](concepts/app-updates.md) and [Settings](stores/settings.md).
 
 ## 2026-11-20

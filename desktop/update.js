@@ -1,6 +1,6 @@
 import { execFile, spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
-import { access, constants, mkdtemp, rm } from "node:fs/promises";
+import { access, constants, mkdir, mkdtemp, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { Readable } from "node:stream";
@@ -10,9 +10,10 @@ import { app, net } from "electron";
 
 const run = promisify(execFile);
 
-// Only a release's own DMG: the page can't make main download anything else.
-const DMG_URL =
-  /^https:\/\/github\.com\/anipoex\/anipoex\/releases\/download\/v[\d.]+\/[\w.-]+\.dmg$/;
+// Only a release's own file: the page can't make main download anything else.
+const RELEASE_FILE =
+  /^https:\/\/github\.com\/anipoex\/anipoex\/releases\/download\/v[\d.]+\/[\w.-]+$/;
+const INSTALLER = process.platform === "win32" ? "-setup.exe" : ".dmg";
 const BUNDLE_ID = "app.anipoex.desktop";
 
 /**
@@ -42,18 +43,51 @@ async function download(url, file, onProgress) {
 }
 
 /**
- * Replaces the running app with the one in a release's DMG, then quits; the
- * new one opens by itself. Electron's autoUpdater would do this, but on macOS
- * it only installs into an app signed with a Developer ID, and the DMG is
- * ad-hoc signed. Downloaded by the app, not a browser, the new app carries no
- * quarantine, so Gatekeeper doesn't stop it.
- * @see https://www.electronjs.org/docs/latest/api/auto-updater#macos
+ * Installs a release's DMG or Windows installer over the running app, then
+ * quits; the new one opens by itself.
  */
 export async function installUpdate(url, onProgress) {
-  if (typeof url !== "string" || !DMG_URL.test(url))
-    throw new Error("Not a release DMG");
+  if (
+    typeof url !== "string" ||
+    !RELEASE_FILE.test(url) ||
+    !url.endsWith(INSTALLER)
+  )
+    throw new Error("Not a release installer");
+  if (!app.isPackaged) throw new Error("Only the packaged app updates itself");
+  if (process.platform === "win32") await installOnWindows(url, onProgress);
+  else await installOnMac(url, onProgress);
+  app.quit();
+}
+
+/**
+ * Runs the release's NSIS installer silently over this app once it quits, and
+ * opens the app again, with the flags electron-updater passes.
+ * @see https://github.com/electron-userland/electron-builder/blob/master/packages/electron-updater/src/NsisUpdater.ts
+ */
+async function installOnWindows(url, onProgress) {
+  // The running setup can't delete itself: the next update clears the last.
+  const dir = path.join(os.tmpdir(), "anipoex-update");
+  await rm(dir, { recursive: true, force: true });
+  await mkdir(dir);
+  const setup = path.join(dir, "anipoex-setup.exe");
+  await download(url, setup, onProgress);
+  spawn(setup, ["--updated", "/S", "--force-run"], {
+    detached: true,
+    stdio: "ignore",
+  }).unref();
+}
+
+/**
+ * Replaces the running app with the one in a release's DMG. Electron's
+ * autoUpdater would do this, but on macOS it only installs into an app signed
+ * with a Developer ID, and the DMG is ad-hoc signed. Downloaded by the app,
+ * not a browser, the new app carries no quarantine, so Gatekeeper doesn't
+ * stop it.
+ * @see https://www.electronjs.org/docs/latest/api/auto-updater#macos
+ */
+async function installOnMac(url, onProgress) {
   const target = runningBundle();
-  if (!app.isPackaged || !target.endsWith(".app"))
+  if (!target.endsWith(".app"))
     throw new Error("Only the packaged app updates itself");
   // A copy opened from Downloads runs from a read-only translocated path.
   if (target.includes("/AppTranslocation/"))
@@ -101,5 +135,4 @@ export async function installUpdate(url, onProgress) {
     await rm(dir, { recursive: true, force: true });
     throw error;
   }
-  app.quit();
 }

@@ -8,7 +8,8 @@
     "start": "bun ensure-runtime.js && electron .",
     "build:web": "cd .. && bunx expo export -p web",
     "build:runtime": "../android/gradlew -p ../modules/extension-runtime/jvm installDist jlinkRuntime",
-    "dist": "bun run build:web && bun run build:runtime && electron-builder --mac"
+    "dist": "bun run build:web && bun run build:runtime && electron-builder --mac",
+    "dist:win": "bun run build:web && bun ensure-runtime.js && electron-builder --win"
   },
   "devDependencies": {
     "electron": "45.2.1",
@@ -33,6 +34,19 @@
         }
       ],
       "identity": null
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "${productName}-${version}-${arch}-setup.${ext}"
     },
     "extraResources": [
       {

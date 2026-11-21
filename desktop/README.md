@@ -1,6 +1,6 @@
 # Desktop
 
-macOS app: Electron loads the web app and runs extensions in a separate JVM process (the sidecar, [sidecar.js](sidecar.js)).
+macOS and Windows app: Electron loads the web app and runs extensions in a separate JVM process (the sidecar, [sidecar.js](sidecar.js)).
 
 `host/` holds what the JVM asks the app for, and `assets/` what the window loads.
 
@@ -41,6 +41,14 @@ This exports the web app (`build:web`, with the `EXPO_PUBLIC_*` values from `.en
 Unsigned: a local build opens normally. A downloaded copy is quarantined and macOS may call it damaged; clear the flag with `xattr -cr /Applications/anipoex.app`.
 
 Updates: Settings → About finds the latest release's DMG, and [update.js](update.js) copies the app out of it, swaps it in after the app quits and opens it again. Electron's `autoUpdater` would need a Developer ID signature. The app must run from a folder it can write to (Applications), not from a translocated copy opened straight from Downloads. To try it, run an older build (`RELEASE_TAG=v0.0.9 bun run desktop:dmg -c.extraMetadata.version=0.0.9`) from Applications.
+
+### Windows
+
+```bash
+bun run desktop:exe
+```
+
+On a Windows machine with a JDK 21 and a generated `android/`, this produces `desktop/dist/anipoex-<version>-x64-setup.exe`, an NSIS installer that installs for the current user (no admin) and opens the app. CI builds it for each release; a Mac can't, since the bundled JVM is built for the machine that builds it. Unsigned: SmartScreen warns on the first run ("More info" → "Run anyway"). Updates download the release's setup and run it silently over the app (`--updated /S --force-run`, as electron-updater does), which reopens it.
 
 ## Data and log
 

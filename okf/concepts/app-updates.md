@@ -1,7 +1,7 @@
 ---
 type: Concept
 title: App updates
-description: Which version the app runs, where newer ones come from, and when the Android, iOS and Mac apps offer one.
+description: Which version the app runs, where newer ones come from, and when the Android, iOS and desktop apps offer one.
 resource: ../../src/features/updates/state/updates.ts
 tags: [updates, releases, version]
 generated: { by: claude-code, at: 2026-11-20T00:00:00Z }
@@ -15,12 +15,12 @@ keeps the version in the app config.
 CI attaches the built apps to each one. The newest **published, non-prerelease** release is
 the one offered. Prereleases and drafts are never offered.
 
-**When the app offers one.** The Android, iOS and Mac apps offer a release when:
+**When the app offers one.** The Android, iOS and desktop apps offer a release when:
 
 - its version is newer than the running one, comparing major, minor and patch as numbers
   (`0.10.0` is newer than `0.9.9`);
 - its file for that platform is already attached (the APK on Android, the IPA on iOS,
-  the DMG on the Mac):
+  the DMG on the Mac, the setup on Windows):
   right after publishing, CI is still building them, and the release is skipped until
   the file is there.
 
@@ -38,4 +38,5 @@ the source each release carries.
 On the Mac, the app downloads the DMG, puts the new app where it runs from and restarts,
 keeping its data. It can't while it runs from somewhere it can't write, like a copy opened
 straight from Downloads: the user moves it to Applications first. A browser always loads
-the latest web app and offers nothing. There is no Windows app yet.
+the latest web app and offers nothing. On Windows, the app runs the release's installer
+silently over itself, which opens it again, keeping its data.
