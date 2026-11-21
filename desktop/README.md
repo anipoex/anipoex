@@ -36,9 +36,9 @@ Tests: `bun test desktop/`.
 JAVA_HOME=<jdk ≥ 17> bun run --cwd desktop dist
 ```
 
-This exports the web app (`build:web`, with the `EXPO_PUBLIC_*` values from `.env.local`), builds the server and the JVM (`build:runtime`, needs a generated `android/`), and produces `desktop/dist/anipoex-<version>-arm64.dmg` (and `desktop/dist/mac-arm64/anipoex.app`). Inside the `.app`, `Contents/Resources/` holds `web/` (served as `app://anipoex/` by [serve.js](assets/serve.js)), `server/` and `jre/`; it needs neither Metro nor an installed Java.
+This exports the web app (`build:web`, with the `EXPO_PUBLIC_*` values from `.env.local`), builds the server and the JVM (`build:runtime`, needs a generated `android/`), and produces `desktop/dist/anipoex-<version>-arm64.dmg` (and `desktop/dist/mac-arm64/Anipoex.app`). Inside the `.app`, `Contents/Resources/` holds `web/` (served as `app://anipoex/` by [serve.js](assets/serve.js)), `server/` and `jre/`; it needs neither Metro nor an installed Java.
 
-Unsigned: a local build opens normally. A downloaded copy is quarantined and macOS may call it damaged; clear the flag with `xattr -cr /Applications/anipoex.app`.
+Unsigned: a local build opens normally. A downloaded copy is quarantined and macOS may call it damaged; clear the flag with `xattr -cr /Applications/Anipoex.app`.
 
 Updates: Settings → About finds the latest release's DMG, and [update.js](update.js) copies the app out of it, swaps it in after the app quits and opens it again. Electron's `autoUpdater` would need a Developer ID signature. The app must run from a folder it can write to (Applications), not from a translocated copy opened straight from Downloads. To try it, run an older build (`RELEASE_TAG=v0.0.9 bun run desktop:dmg -c.extraMetadata.version=0.0.9`) from Applications.
 
@@ -52,7 +52,7 @@ On a Windows machine with a JDK 21 and a generated `android/`, this produces `de
 
 ## Data and log
 
-In development everything lives in `~/Library/Application Support/anipoex-desktop/` (the name comes from `package.json`, so don't change it or the AniList session and the extensions are lost); the packaged app uses `~/Library/Application Support/anipoex/` (its `productName`), with its own session and extensions:
+In development everything lives in `~/Library/Application Support/anipoex-desktop/` (the name comes from `package.json`, so don't change it or the AniList session and the extensions are lost); the packaged app uses `~/Library/Application Support/Anipoex/` (its `productName`; the folder of a build named `anipoex` is the same one, macOS ignores case), with its own session and extensions:
 
 - `extensions/`: the installed extensions.
 - `extensions/server.log`: the server's stderr. It is emptied when the server first starts in each app run; if the server crashes and restarts, it keeps appending.

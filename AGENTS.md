@@ -2,6 +2,8 @@
 
 Read the exact versioned docs at https://docs.expo.dev/versions/v58.0.0/ before writing any code.
 
+- `expo prebuild` recreates `ios/` and `android/` unless given `--no-clean` (SDK 58's default is clean), deleting Pods, Gradle and Xcode builds and the local release files in their `dist/`. Pass `--no-clean` to apply a config change in place.
+
 # Project structure and conventions
 
 Read [docs/app-structure.md](docs/app-structure.md) before adding, moving or splitting files: folder layout, platform files, hooks/utils placement and native screen rules.

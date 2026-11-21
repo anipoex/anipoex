@@ -17,9 +17,9 @@
   },
   "build": {
     "appId": "app.anipoex.desktop",
-    "productName": "anipoex",
+    "productName": "Anipoex",
     "extraMetadata": {
-      "productName": "anipoex"
+      "productName": "Anipoex"
     },
     "files": [
       "!**/*.test.js"
@@ -33,7 +33,8 @@
           ]
         }
       ],
-      "identity": null
+      "identity": null,
+      "artifactName": "anipoex-${version}-${arch}.${ext}"
     },
     "win": {
       "target": [
@@ -46,7 +47,7 @@
       ]
     },
     "nsis": {
-      "artifactName": "${productName}-${version}-${arch}-setup.${ext}"
+      "artifactName": "anipoex-${version}-${arch}-setup.${ext}"
     },
     "extraResources": [
       {

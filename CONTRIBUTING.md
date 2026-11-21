@@ -50,7 +50,7 @@ bun run codegen    # after changing a .gql operation
 <details>
 <summary>Release builds on your machine</summary>
 
-Each one builds from the native project `bun run ios` or `bun run android` (or `bunx expo prebuild`) generated, with the version in `app.json`. For another version, prebuild with the tag: `RELEASE_TAG=vX.Y.Z bunx expo prebuild --no-install`. The files land in each platform's `dist/`; `ios/` and `android/` are generated, so `bun run prebuild` (`--clean`) deletes them too.
+Each one builds from the native project `bun run ios` or `bun run android` (or `bunx expo prebuild`) generated, with the version in `app.json`. For another version, prebuild with the tag: `RELEASE_TAG=vX.Y.Z bunx expo prebuild --no-clean --no-install`. The files land in each platform's `dist/`, inside the generated `ios/` and `android/`: a prebuild without `--no-clean` recreates both folders and deletes them.
 
 | Command | Builds | Signed with | For |
 |---|---|---|---|

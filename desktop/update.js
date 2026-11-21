@@ -26,7 +26,7 @@ mv "$2" "$2.old" && { mv "$3" "$2" || mv "$2.old" "$2"; }
 rm -rf "$2.old" "$4"
 open "$2"`;
 
-/** The .app this process runs from: …/anipoex.app/Contents/MacOS/anipoex. */
+/** The .app this process runs from: …/Anipoex.app/Contents/MacOS/Anipoex. */
 const runningBundle = () => path.resolve(app.getPath("exe"), "../../..");
 
 async function download(url, file, onProgress) {
@@ -113,7 +113,7 @@ async function installOnMac(url, onProgress) {
       mount,
     ]);
     try {
-      await run("ditto", [path.join(mount, "anipoex.app"), next]);
+      await run("ditto", [path.join(mount, "Anipoex.app"), next]);
     } finally {
       await run("hdiutil", ["detach", mount, "-force"]).catch(() => {});
     }
