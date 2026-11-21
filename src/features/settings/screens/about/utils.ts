@@ -21,7 +21,9 @@ export function checkStatus() {
   const update = updates$.available.get();
   const progress = updates$.progress.get();
   if (update && progress !== undefined)
-    return `Downloading ${update.version}… ${Math.round(progress * 100)}%`;
+    return progress < 1
+      ? `Downloading ${update.version}… ${Math.round(progress * 100)}%`
+      : `Installing ${update.version}…`;
   if (!update) return "Look for a newer version on GitHub";
   return isUpdateReady()
     ? `Version ${update.version} is ready to install`

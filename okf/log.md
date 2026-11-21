@@ -1,5 +1,9 @@
 # Bundle Update Log
 
+## 2026-11-21
+
+* **The Mac app updates itself**: it looks for the release's DMG once a day like Android and iOS, and its update swaps the app for the DMG's and restarts it. Updated [App updates](concepts/app-updates.md) and [Settings](stores/settings.md).
+
 ## 2026-11-20
 
 * **iOS offers app updates too**: it looks for the release's IPA once a day like Android, and its update hands the IPA to SideStore or AltStore, whichever the device has. Updated [App updates](concepts/app-updates.md) and [Settings](stores/settings.md).

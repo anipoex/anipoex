@@ -21,6 +21,13 @@ contextBridge.exposeInMainWorld("anipoex", {
   folder: (method, dir, arg) => invokeClean("folder", method, dir, arg),
   downloads: (method, root, ...args) =>
     invokeClean("downloads", method, root, ...args),
+  installUpdate: (url, onProgress) => {
+    const listener = (_event, fraction) => onProgress(fraction);
+    ipcRenderer.on("update-progress", listener);
+    return invokeClean("install-update", url).finally(() =>
+      ipcRenderer.off("update-progress", listener),
+    );
+  },
   onFolderChange: (callback) => {
     const listener = () => callback();
     ipcRenderer.on("folder-changed", listener);

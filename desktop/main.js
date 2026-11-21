@@ -38,6 +38,7 @@ import {
   wvStop,
 } from "./host/webview/webview.js";
 import { startSidecar } from "./sidecar.js";
+import { installUpdate } from "./update.js";
 
 // Packaged, electron-builder puts them in Resources; in development they
 // come from Metro and the Gradle build.
@@ -308,6 +309,13 @@ app.whenReady().then(() => {
   ipcMain.on("scan-progress", (event, fraction) => {
     if (originOf(event.senderFrame?.url) !== APP_ORIGIN) return;
     if (typeof fraction === "number") window.setProgressBar(fraction);
+  });
+  ipcMain.handle("install-update", (event, url) => {
+    if (originOf(event.senderFrame?.url) !== APP_ORIGIN)
+      throw new Error("Not allowed");
+    return installUpdate(url, (fraction) =>
+      event.sender.send("update-progress", fraction),
+    );
   });
   registerFolder(
     ipcMain,

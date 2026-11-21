@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/toast";
 import { network$ } from "@/state/network";
 import { settings$ } from "@/state/settings";
 import { backgroundWork } from "@/utils/background-time";
+import { type DesktopBridge, desktop } from "@/utils/desktop";
 import { isCheckDue } from "../utils/check-due";
 import {
   downloadApk,
@@ -21,9 +22,15 @@ export const APP_COMMIT: string | undefined =
 
 /**
  * The release file this app updates from: Android installs the APK itself,
- * iOS hands the IPA to SideStore. None on web and desktop.
+ * iOS hands the IPA to SideStore, the Mac app swaps itself for the DMG's.
+ * None in a browser, which always loads the latest.
  */
-const UPDATE_FILE = Platform.select({ android: ".apk", ios: ".ipa" });
+const UPDATE_FILE = Platform.select({
+  android: ".apk",
+  ios: ".ipa",
+  // shortcut: the desktop app is Mac-only; Windows needs its own file here.
+  web: desktop ? ".dmg" : undefined,
+});
 
 export const updates$ = observable({
   checking: false,
@@ -31,7 +38,7 @@ export const updates$ = observable({
   available: undefined as Update | undefined,
   /** The sheet that offers `available`. */
   open: false,
-  /** How much of the APK has downloaded, 0 to 1, while it downloads. */
+  /** How much of the APK or DMG has downloaded, 0 to 1, while it downloads. */
   progress: undefined as number | undefined,
   /** The version whose APK is downloaded, ready to install. */
   downloaded: undefined as string | undefined,
@@ -72,11 +79,15 @@ const work = backgroundWork("Update", {
 /** Android won't open the installer from the background: wait for the app. */
 let installOnReturn = false;
 
-/** Downloads the offered APK and hands it to Android's installer. */
+/**
+ * Downloads the offered APK and hands it to Android's installer; the desktop
+ * app installs the DMG's and restarts.
+ */
 export async function installUpdate() {
   const update = updates$.available.peek();
   if (!update || updates$.progress.peek() !== undefined) return;
   updates$.error.set(undefined);
+  if (desktop) return installOnDesktop(desktop, update);
   if (updates$.downloaded.peek() !== update.version || !isApkDownloaded()) {
     updates$.progress.set(0);
     work.hold();
@@ -101,6 +112,21 @@ export async function installUpdate() {
   }
   if (AppState.currentState === "active") void install();
   else installOnReturn = true;
+}
+
+async function installOnDesktop(bridge: DesktopBridge, update: Update) {
+  updates$.progress.set(0);
+  try {
+    // Resolves as the app quits.
+    await bridge.installUpdate(update.fileUrl, (fraction) =>
+      updates$.progress.set(fraction),
+    );
+  } catch (error) {
+    updates$.error.set(
+      error instanceof Error ? error.message : "Couldn't install the update.",
+    );
+    updates$.progress.set(undefined);
+  }
 }
 
 async function install() {

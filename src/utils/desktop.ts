@@ -45,6 +45,14 @@ export interface DesktopBridge {
   ): Promise<boolean>;
   downloads(method: "get", root: string, path: string): Promise<string>;
   downloads(method: "remove", root: string, path: string): Promise<boolean>;
+  /**
+   * Swaps the app for the one in a release's DMG and restarts it; rejects
+   * with the reason when it can't (not in Applications).
+   */
+  installUpdate(
+    url: string,
+    onProgress: (fraction: number) => void,
+  ): Promise<void>;
   /** Runs `callback` when a sync file in the watched folder changes. */
   onFolderChange(callback: () => void): () => void;
 }

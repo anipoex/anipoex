@@ -1,7 +1,7 @@
 ---
 type: Concept
 title: App updates
-description: Which version the app runs, where newer ones come from, and when the Android and iOS apps offer one.
+description: Which version the app runs, where newer ones come from, and when the Android, iOS and Mac apps offer one.
 resource: ../../src/features/updates/state/updates.ts
 tags: [updates, releases, version]
 generated: { by: claude-code, at: 2026-11-20T00:00:00Z }
@@ -15,11 +15,12 @@ keeps the version in the app config.
 CI attaches the built apps to each one. The newest **published, non-prerelease** release is
 the one offered. Prereleases and drafts are never offered.
 
-**When the app offers one.** The Android and iOS apps offer a release when:
+**When the app offers one.** The Android, iOS and Mac apps offer a release when:
 
 - its version is newer than the running one, comparing major, minor and patch as numbers
   (`0.10.0` is newer than `0.9.9`);
-- its file for that platform is already attached (the APK on Android, the IPA on iOS):
+- its file for that platform is already attached (the APK on Android, the IPA on iOS,
+  the DMG on the Mac):
   right after publishing, CI is still building them, and the release is skipped until
   the file is there.
 
@@ -34,5 +35,7 @@ iOS, the store on the device installs it over the app, keeping its data: SideSto
 has it, else AltStore; with neither, the release page offers the IPA. SideStore and AltStore also find new versions by themselves through
 the source each release carries.
 
-The desktop app's About shows the version and links to the release, without offering to
-install.
+On the Mac, the app downloads the DMG, puts the new app where it runs from and restarts,
+keeping its data. It can't while it runs from somewhere it can't write, like a copy opened
+straight from Downloads: the user moves it to Applications first. A browser always loads
+the latest web app and offers nothing. There is no Windows app yet.

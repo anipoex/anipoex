@@ -40,6 +40,8 @@ This exports the web app (`build:web`, with the `EXPO_PUBLIC_*` values from `.en
 
 Unsigned: a local build opens normally. A downloaded copy is quarantined and macOS may call it damaged; clear the flag with `xattr -cr /Applications/anipoex.app`.
 
+Updates: Settings → About finds the latest release's DMG, and [update.js](update.js) copies the app out of it, swaps it in after the app quits and opens it again. Electron's `autoUpdater` would need a Developer ID signature. The app must run from a folder it can write to (Applications), not from a translocated copy opened straight from Downloads. To try it, run an older build (`RELEASE_TAG=v0.0.9 bun run desktop:dmg -c.extraMetadata.version=0.0.9`) from Applications.
+
 ## Data and log
 
 In development everything lives in `~/Library/Application Support/anipoex-desktop/` (the name comes from `package.json`, so don't change it or the AniList session and the extensions are lost); the packaged app uses `~/Library/Application Support/anipoex/` (its `productName`), with its own session and extensions:
