@@ -56,7 +56,7 @@ jobs:
       - name: Upload
         run: |
           apk="anipoex-$RELEASE_TAG.apk"
-          mv android/dist/anipoex.apk "$apk"
+          mv "android/dist/anipoex-${RELEASE_TAG#v}.apk" "$apk"
           gh release upload "$RELEASE_TAG" "$apk" --clobber
         env:
           GH_TOKEN: ${{ github.token }}
@@ -104,7 +104,7 @@ jobs:
       - name: Write the SideStore source and upload
         run: |
           ipa="anipoex-$RELEASE_TAG.ipa"
-          mv ios/dist/anipoex.ipa "$ipa"
+          mv "ios/dist/anipoex-${RELEASE_TAG#v}.ipa" "$ipa"
           gh release view "$RELEASE_TAG" --json tagName,body,publishedAt > "$RUNNER_TEMP/release.json"
           bun scripts/ipa/source.ts ios/build/derived/Build/Products/Release-iphoneos/anipoex.app \
             "$ipa" "$RUNNER_TEMP/release.json" > source.json

@@ -56,8 +56,8 @@ Each one builds from the native project `bun run ios` or `bun run android` (or `
 |---|---|---|---|
 | `bun run ios:release` | Release app on a simulator or a cabled iPhone | your Xcode team | trying a release build, no Metro |
 | `bun run android:release` | Release app on an emulator or a cabled phone | the debug key | trying a release build, no Metro |
-| `bun run ios:ipa` | `ios/dist/anipoex.ipa` | ad hoc, with the app's entitlements | installing through SideStore or AltStore |
-| `bun run android:apk` | `android/dist/anipoex.apk` | the release key | the same APK as a GitHub release |
+| `bun run ios:ipa` | `ios/dist/anipoex-<version>.ipa` | ad hoc, with the app's entitlements | installing through SideStore or AltStore |
+| `bun run android:apk` | `android/dist/anipoex-<version>.apk` | the release key | the same APK as a GitHub release |
 | `bun run desktop:dmg` | `desktop/dist/anipoex-<version>-arm64.dmg` | ad hoc | the macOS app, see [desktop/README.md](desktop/README.md#packaged-app) |
 
 - **`android:release`** is signed with the debug key, so it doesn't install over a release APK: uninstall first.
@@ -70,7 +70,7 @@ Each one builds from the native project `bun run ios` or `bun run android` (or `
   keyPassword=…
   ```
 
-  It fails if the APK isn't signed by the release certificate. Install it with `adb install -r android/dist/anipoex.apk`.
+  It fails if the APK isn't signed by the release certificate. Install it with `adb install -r android/dist/anipoex-<version>.apk`.
 - **`ios:ipa`** carries no Apple signature: SideStore or AltStore sign it on the device.
 
 </details>

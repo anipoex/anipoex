@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds ios/dist/anipoex.ipa from the prebuilt ios/ project (pods installed),
+# Builds ios/dist/anipoex-<version>.ipa from the prebuilt ios/ project (pods installed),
 # for SideStore and AltStore: they sign it on the device, so no Apple account.
 set -euo pipefail
 shopt -s nullglob
@@ -20,8 +20,10 @@ codesign -f -s - --entitlements ios/ExpoWidgetsTarget/ExpoWidgetsTarget.entitlem
 codesign -f -s - --entitlements ios/anipoex/anipoex.entitlements "$app"
 [[ "$(codesign -d --entitlements - "$app")" == *group.com.anipoex.app* ]]
 
-rm -rf ios/build/Payload ios/dist/anipoex.ipa
+version="$(plutil -extract CFBundleShortVersionString raw "$app/Info.plist")"
+ipa="ios/dist/anipoex-$version.ipa"
+rm -rf ios/build/Payload "$ipa"
 mkdir -p ios/build/Payload ios/dist
 cp -R "$app" ios/build/Payload/
-(cd ios/build && zip -qry ../dist/anipoex.ipa Payload)
-echo "Built ios/dist/anipoex.ipa"
+(cd ios/build && zip -qry "../../$ipa" Payload)
+echo "Built $ipa"

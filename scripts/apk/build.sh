@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds android/dist/anipoex.apk, signed with the release key, from the prebuilt
+# Builds android/dist/anipoex-<version>.apk, signed with the release key, from the prebuilt
 # android/ project. The key is the one keystore.properties names at the repo
 # root (storeFile, storePassword, keyAlias, keyPassword); CI writes both.
 set -euo pipefail
@@ -26,11 +26,14 @@ key_password="$(prop keyPassword)"
   -Pandroid.injected.signing.key.alias="$key_alias" \
   -Pandroid.injected.signing.key.password="$key_password")
 
-apk=android/dist/anipoex.apk
-mkdir -p android/dist
-cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+built=android/app/build/outputs/apk/release/app-release.apk
 sdk="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
-apksigner="$(find "$sdk/build-tools" -name apksigner | sort -V | tail -1)"
+tools="$(find "$sdk/build-tools" -mindepth 1 -maxdepth 1 | sort -V | tail -1)"
+version="$("$tools/aapt2" dump badging "$built" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p")"
+apk="android/dist/anipoex-$version.apk"
+mkdir -p android/dist
+cp "$built" "$apk"
+apksigner="$tools/apksigner"
 certs="$("$apksigner" verify --print-certs "$apk")"
 grep -q "SHA-256 digest: $SIGNING_CERT_SHA256" <<<"$certs"
 echo "Built $apk"
