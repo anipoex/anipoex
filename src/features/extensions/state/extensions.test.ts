@@ -124,6 +124,16 @@ describe("loadExtensions", () => {
   });
 });
 
+describe("loadExtensions offline", () => {
+  it("doesn't toast a repo that never answered until the network is known", async () => {
+    globalThis.fetch = (async () => {
+      throw new TypeError("Network request failed");
+    }) as unknown as typeof fetch;
+    await loadExtensions();
+    expect(toastError).not.toHaveBeenCalledWith("Couldn't load Bad");
+  });
+});
+
 describe("loadExtensions failures", () => {
   it("keeps the previous list when an installed entry can't be read", async () => {
     await loadExtensions();

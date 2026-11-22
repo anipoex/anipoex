@@ -1,4 +1,5 @@
 import { gunzipSync } from "fflate";
+import { fetchOrNetworkError } from "@/graphql/utils";
 import { isWebUrl } from "@/utils/is-web-url";
 import type { Extension } from "./extension";
 import { decodeExtensionList, decodeStore } from "./protobuf";
@@ -82,7 +83,7 @@ const gunzip = (bytes: Uint8Array): Uint8Array => {
  */
 const download = async (url: string): Promise<Uint8Array> => {
   if (!/^https:\/\//i.test(url)) throw new Error(HTTPS_ONLY);
-  const response = await fetch(url);
+  const response = await fetchOrNetworkError(url);
   if (!response.ok)
     throw new Error(`Couldn't read ${url} (${response.status})`);
   const bytes = new Uint8Array(await response.arrayBuffer());

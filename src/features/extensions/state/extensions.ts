@@ -1,5 +1,6 @@
 import { observable } from "@legendapp/state";
 import { toast } from "@/components/ui/toast";
+import { isNetworkError } from "@/graphql/utils";
 import { network$, onReconnect } from "@/state/network";
 import { settings$ } from "@/state/settings";
 import { type InstalledExtension, runtime } from "../runtime";
@@ -43,6 +44,10 @@ export async function refreshInstalled(): Promise<void> {
 const message = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
 
+// Past the network check's 5 s grace (state/network/system.ts): an offline
+// cold start fails the catalog before the app knows it's offline.
+const NETWORK_SETTLED_MS = 6_000;
+
 let latest = 0;
 
 /** Every repo's index from the last load: a package may come from several. */
@@ -58,8 +63,12 @@ export async function loadExtensions(): Promise<void> {
     settings$.extensions.repos.peek().map(async (repo) => {
       try {
         return { repo, entries: await fetchIndex(repo) };
-      } catch {
-        if (network$.online.peek()) toast.error(`Couldn't load ${repo.name}`);
+      } catch (error) {
+        const report = () => {
+          if (network$.online.peek()) toast.error(`Couldn't load ${repo.name}`);
+        };
+        if (isNetworkError(error)) setTimeout(report, NETWORK_SETTLED_MS);
+        else report();
         return { repo, entries: [] };
       }
     }),
