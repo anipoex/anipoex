@@ -160,21 +160,21 @@ class ExtensionRuntimeModule : Module() {
           if (page.imageUrl == null) page.imageUrl = source.getImageUrl(page)
           val request = source.hostImageRequest(page)
           // The page's own url: `image` builds its request (Mihon's getImage).
-          mapOf("index" to page.index, "imageUrl" to page.imageUrl, "headers" to request.headers.toMap())
+          mapOf("index" to page.index, "url" to page.url, "imageUrl" to page.imageUrl, "headers" to request.headers.toMap())
         }
       }
     }
 
     // The reader shows each page from here, never its url: the source's
     // interceptors may rewrite it (descramblers).
-    AsyncFunction("image") Coroutine { sourceId: String, imageUrl: String, index: Int ->
-      pageCache.fetch(source(sourceId) as HttpSource, imageUrl, index)
+    AsyncFunction("image") Coroutine { sourceId: String, url: String, imageUrl: String, index: Int ->
+      pageCache.fetch(source(sourceId) as HttpSource, url, imageUrl, index)
     }
 
-    AsyncFunction("stagePage") Coroutine { sourceId: String, imageUrl: String, index: Int, stage: String, name: String ->
+    AsyncFunction("stagePage") Coroutine { sourceId: String, url: String, imageUrl: String, index: Int, stage: String, name: String ->
       val dir = File(staging, ChapterArchive.checkId(stage))
       ChapterArchive.checkId(name)
-      val page = pageCache.fetch(source(sourceId) as HttpSource, imageUrl, index)
+      val page = pageCache.fetch(source(sourceId) as HttpSource, url, imageUrl, index)
       withContext(Dispatchers.IO) {
         ChapterArchive.stage(File(java.net.URI(page["uri"] as String)), page["type"] as String?, dir, name)
       }

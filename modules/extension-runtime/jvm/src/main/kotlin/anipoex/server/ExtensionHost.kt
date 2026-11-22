@@ -212,19 +212,19 @@ class ExtensionHost(dataDir: File) {
             val request = source.hostImageRequest(page)
             // The page's own url: `image` builds its request (Mihon's
             // getImage).
-            mapOf("index" to page.index, "imageUrl" to page.imageUrl, "headers" to request.headers.toMap())
+            mapOf("index" to page.index, "url" to page.url, "imageUrl" to page.imageUrl, "headers" to request.headers.toMap())
         }
     }
 
     /** A page's image through its source's client, as a file ([PageCache]). */
-    suspend fun image(sourceId: String, imageUrl: String, index: Int): Map<String, Any?> =
-        pageCache.fetch(source(sourceId) as HttpSource, imageUrl, index)
+    suspend fun image(sourceId: String, url: String, imageUrl: String, index: Int): Map<String, Any?> =
+        pageCache.fetch(source(sourceId) as HttpSource, url, imageUrl, index)
 
     /** Fetches a page through its source and keeps it in the chapter's staging folder. */
-    suspend fun stagePage(sourceId: String, imageUrl: String, index: Int, stage: String, name: String) {
+    suspend fun stagePage(sourceId: String, url: String, imageUrl: String, index: Int, stage: String, name: String) {
         val dir = File(staging, ChapterArchive.checkId(stage))
         ChapterArchive.checkId(name)
-        val page = pageCache.fetch(source(sourceId) as HttpSource, imageUrl, index)
+        val page = pageCache.fetch(source(sourceId) as HttpSource, url, imageUrl, index)
         ChapterArchive.stage(File(URI(page["uri"] as String)), page["type"] as String?, dir, name)
     }
 

@@ -191,11 +191,20 @@ app.whenReady().then(() => {
   // Only what `pages` returned is served, never a URL the renderer picks.
   const pages = pageStore();
   protocol.handle(PAGE_SCHEME, (request) =>
-    servePage(pages, request.url, async ({ sourceId, imageUrl, index }) => {
-      const reply = await sidecar.call("image", { sourceId, imageUrl, index });
-      if (reply.error !== undefined) throw new Error(reply.error);
-      return reply.result;
-    }),
+    servePage(
+      pages,
+      request.url,
+      async ({ sourceId, url, imageUrl, index }) => {
+        const reply = await sidecar.call("image", {
+          sourceId,
+          url,
+          imageUrl,
+          index,
+        });
+        if (reply.error !== undefined) throw new Error(reply.error);
+        return reply.result;
+      },
+    ),
   );
 
   ipcMain.handle("runtime", async (event, method, args) => {

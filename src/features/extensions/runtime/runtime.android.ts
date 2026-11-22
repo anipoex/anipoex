@@ -10,6 +10,7 @@ const native = requireNativeModule<
   > & {
     stagePage(
       sourceId: string,
+      url: string,
       imageUrl: string,
       index: number,
       stage: string,
@@ -20,6 +21,7 @@ const native = requireNativeModule<
     unpacked(key: string): Promise<FilePage[] | null>;
     image(
       sourceId: string,
+      url: string,
       imageUrl: string,
       index: number,
     ): Promise<{ uri: string }>;
@@ -48,9 +50,22 @@ export const runtime: RuntimeApi = {
   pages: (sourceId, chapterUrl, memo) =>
     clean(native.pages(sourceId, chapterUrl, memo)),
   pageImage: async (sourceId, page) =>
-    (await clean(native.image(sourceId, page.imageUrl, page.index))).uri,
+    (
+      await clean(
+        native.image(sourceId, page.url ?? "", page.imageUrl, page.index),
+      )
+    ).uri,
   stagePage: (sourceId, page, stage, name) =>
-    clean(native.stagePage(sourceId, page.imageUrl, page.index, stage, name)),
+    clean(
+      native.stagePage(
+        sourceId,
+        page.url ?? "",
+        page.imageUrl,
+        page.index,
+        stage,
+        name,
+      ),
+    ),
   pack: async (stage, comicInfo) =>
     (await clean(native.pack(stage, comicInfo))).uri,
   dropStage: (stage) => clean(native.dropStage(stage)),

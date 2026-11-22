@@ -20,6 +20,7 @@ export function pageStore(limit = 1000) {
           const id = crypto.randomUUID();
           entries.set(id, {
             sourceId,
+            url: page.url,
             imageUrl: page.imageUrl,
             index: page.index,
           });
@@ -98,7 +99,14 @@ export function stageArgs(store, args) {
   const page = store.original(args?.imageUrl);
   if (!page || page.sourceId !== args.sourceId)
     return { error: "Unknown page" };
-  return { args: { ...args, imageUrl: page.imageUrl, index: page.index } };
+  return {
+    args: {
+      ...args,
+      url: page.url,
+      imageUrl: page.imageUrl,
+      index: page.index,
+    },
+  };
 }
 
 /**

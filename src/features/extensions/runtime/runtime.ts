@@ -60,6 +60,8 @@ export interface SourceChapter {
 
 export interface SourcePage {
   index: number;
+  /** The source's own data for the page, handed back for its image. */
+  url?: string;
   imageUrl: string;
   /** Request headers the image needs (referer, cookies). */
   headers: Record<string, string>;

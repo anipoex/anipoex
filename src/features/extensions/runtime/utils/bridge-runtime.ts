@@ -35,6 +35,7 @@ export const bridgeRuntime = (send: Send): RuntimeApi => {
       (
         await call<{ uri: string }>("image", {
           sourceId,
+          url: page.url,
           imageUrl: page.imageUrl,
           index: page.index,
         })
@@ -42,6 +43,7 @@ export const bridgeRuntime = (send: Send): RuntimeApi => {
     stagePage: (sourceId, page, stage, name) =>
       call("stagePage", {
         sourceId,
+        url: page.url,
         imageUrl: page.imageUrl,
         index: page.index,
         stage,

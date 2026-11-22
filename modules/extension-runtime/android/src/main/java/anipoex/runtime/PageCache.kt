@@ -18,14 +18,16 @@ class PageCache(private val dir: File, private val limit: Int = 500) {
     /**
      * Returns the page's `file://` URI and the site's Content-Type: null when
      * it gave none, or when the page is already here (a reader scrolling
-     * back), which is read again instead of downloaded.
+     * back), which is read again instead of downloaded. [url] is the page's
+     * own, which some sources' image requests read.
      */
-    suspend fun fetch(source: HttpSource, imageUrl: String, index: Int): Map<String, Any?> = withContext(Dispatchers.IO) {
-        val name = MessageDigest.getInstance("SHA-256").digest(imageUrl.toByteArray()).joinToString("") { "%02x".format(it) }
+    suspend fun fetch(source: HttpSource, url: String, imageUrl: String, index: Int): Map<String, Any?> = withContext(Dispatchers.IO) {
+        // Both: an imageUrl can be a bare path that only the url makes unique.
+        val name = MessageDigest.getInstance("SHA-256").digest("$url\n$imageUrl".toByteArray()).joinToString("") { "%02x".format(it) }
         val file = File(dir, name)
         // Touched so the pages being read stay among the newest.
         if (file.setLastModified(System.currentTimeMillis())) return@withContext mapOf("uri" to file.toPath().toUri().toString(), "type" to null)
-        source.getImage(Page(index, imageUrl = imageUrl)).use { response ->
+        source.getImage(Page(index, url, imageUrl)).use { response ->
             dir.mkdirs()
             // Written aside and moved in, so a reader never shows half a page.
             val partial = File.createTempFile(name, ".part", dir)
