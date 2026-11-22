@@ -18,7 +18,6 @@ export function useDownloadGroup(id: string) {
   const mangaId = Number(id.slice(0, slash));
 
   return {
-    keys,
     title,
     cover,
     expanded,

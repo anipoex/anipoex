@@ -70,8 +70,7 @@ export function visibleSections(
   );
 }
 
-export type ActivityRow =
-  | { kind: "header"; key: string; section: ActivitySection; count: number }
+export type ActivityItemRow =
   | {
       kind: "item";
       key: string;
@@ -79,25 +78,80 @@ export type ActivityRow =
       id: string;
       index: number;
       count: number;
+      /** The section's last row: no open group's rows follow it. */
+      last: boolean;
+    }
+  | {
+      /**
+       * A row of an open group, right under it: a download group's chapter
+       * (its key), or a running manga's source (`mangaId/sourceId`).
+       */
+      kind: "child";
+      key: string;
+      section: GroupSection;
+      id: string;
+      /** Its place in its group. */
+      index: number;
+      count: number;
+      last: boolean;
     };
+
+/** The sections whose rows open into rows of their own. */
+export type GroupSection = "downloads" | "running";
+
+export type ActivityRow =
+  | { kind: "header"; key: string; section: ActivitySection; count: number }
+  | ActivityItemRow;
+
+/** Each open group's child ids, by its row's id. */
+export type OpenGroups = Record<string, string[]>;
 
 // Keys carry the section: one manga can sit in two sections at once.
 export function toRows(
   ids: ActivityIds,
   filter: ActivityFilter,
+  open: OpenGroups = {},
 ): ActivityRow[] {
-  return visibleSections(ids, filter).flatMap((section): ActivityRow[] => {
-    const list = ids[section];
+  return visibleSections(ids, filter).flatMap((section): ActivityRow[] => [
+    {
+      kind: "header",
+      key: `header-${section}`,
+      section,
+      count: ids[section].length,
+    },
+    ...sectionRows(section, ids[section], open),
+  ]);
+}
+
+/** A section's rows: an open group's rows follow it. */
+export function sectionRows(
+  section: ActivitySection,
+  list: string[],
+  open: OpenGroups = {},
+): ActivityItemRow[] {
+  return list.flatMap((id, index): ActivityItemRow[] => {
+    const children =
+      ((section === "downloads" || section === "running") && open[id]) || [];
+    const end = index === list.length - 1;
     return [
-      { kind: "header", key: `header-${section}`, section, count: list.length },
-      ...list.map(
-        (id, index): ActivityRow => ({
-          kind: "item",
-          key: `${section}:${id}`,
-          section,
-          id,
-          index,
-          count: list.length,
+      {
+        kind: "item",
+        key: `${section}:${id}`,
+        section,
+        id,
+        index,
+        count: list.length,
+        last: end && children.length === 0,
+      },
+      ...children.map(
+        (child, i): ActivityItemRow => ({
+          kind: "child",
+          key: `child:${section}:${child}`,
+          section: section as GroupSection,
+          id: child,
+          index: i,
+          count: children.length,
+          last: end && i === children.length - 1,
         }),
       ),
     ];

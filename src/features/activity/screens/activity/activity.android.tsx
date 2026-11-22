@@ -40,13 +40,20 @@ import { downloadsPaused$ } from "@/features/downloads";
 import { useSetHeaderScrolled } from "@/hooks/use-header-scroll";
 import { useThemeM3Colors } from "@/hooks/use-theme/use-theme.android";
 import { ActivityToolbar } from "./components/activity-toolbar";
+import { DownloadItem } from "./components/download-item";
 import { SectionItem } from "./components/section-item";
+import { SourceItem } from "./components/source-item";
 import { StatusCard } from "./components/status-card";
 import { ALL_CAUGHT_UP } from "./utils/all-caught-up";
 import type { HeaderAction } from "./utils/download-actions";
 import { headerActions, NO_DOWNLOADS } from "./utils/header-actions";
 import { SECTION_DESCRIPTIONS, sectionTitle } from "./utils/section-header";
-import { downloadsFailed } from "./utils/state";
+import {
+  downloadsFailed,
+  openGroupIds,
+  openGroups,
+  sourceOf,
+} from "./utils/state";
 import { statusMode } from "./utils/status-mode";
 
 const FOOTERS: Partial<Record<ActivitySection, string>> = {
@@ -59,12 +66,16 @@ export function Activity() {
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
   const ids = useActivityIds();
+  const open = useValue(openGroupIds);
   const statusShown = useValue(() => statusMode() !== "");
   const setHeaderScrolled = useSetHeaderScrolled();
 
   const filter = parseFilter(params.filter);
   const counts = useMemo(() => countsOf(ids), [ids]);
-  const rows = useMemo(() => toRows(ids, filter), [ids, filter]);
+  const rows = useMemo(
+    () => toRows(ids, filter, openGroups(open)),
+    [ids, filter, open],
+  );
   const empty = emptyKind(ids, filter, statusShown);
 
   // `all` is the default: keep it out of the URL.
@@ -152,14 +163,26 @@ function ActivityList({
                 )
               ) : (
                 <Column>
-                  <SectionItem
-                    section={row.section}
-                    id={row.id}
-                    {...corners(row.index, row.count)}
-                  />
-                  {row.index === row.count - 1 && (
-                    <Footer section={row.section} />
+                  {row.kind === "child" ? (
+                    row.section === "downloads" ? (
+                      <DownloadItem
+                        id={row.id}
+                        {...corners(row.index, row.count)}
+                      />
+                    ) : (
+                      <SourceItem
+                        {...sourceOf(row.id)}
+                        {...corners(row.index, row.count)}
+                      />
+                    )
+                  ) : (
+                    <SectionItem
+                      section={row.section}
+                      id={row.id}
+                      {...corners(row.index, row.count)}
+                    />
                   )}
+                  {row.last && <Footer section={row.section} />}
                 </Column>
               )
             }

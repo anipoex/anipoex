@@ -20,6 +20,7 @@ import {
   countsOf,
   emptyKind,
   parseFilter,
+  sectionRows,
   visibleSections,
 } from "@/features/activity/utils/filters";
 import { SECTION_IDS } from "@/features/activity/utils/section-ids";
@@ -27,13 +28,20 @@ import { downloadsPending, split } from "@/features/activity/utils/state";
 import { downloadsPaused$ } from "@/features/downloads";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { ActivityToolbar } from "./components/activity-toolbar";
+import { DownloadItem } from "./components/download-item";
 import { SectionItem } from "./components/section-item";
+import { SourceItem } from "./components/source-item";
 import { StatusCard } from "./components/status-card";
 import { ALL_CAUGHT_UP } from "./utils/all-caught-up";
 import type { HeaderAction } from "./utils/download-actions";
 import { headerActions, NO_DOWNLOADS } from "./utils/header-actions";
 import { SECTION_DESCRIPTIONS, sectionTitle } from "./utils/section-header";
-import { downloadsFailed } from "./utils/state";
+import {
+  downloadsFailed,
+  openGroupIds,
+  openGroups,
+  sourceOf,
+} from "./utils/state";
 import { statusMode } from "./utils/status-mode";
 
 const FOOTERS: Partial<Record<ActivitySection, string>> = {
@@ -127,7 +135,13 @@ const SectionView = memo(function SectionView({
   modifiers,
 }: Row & { section: ActivitySection }) {
   const ids = split(useValue(SECTION_IDS[section]));
+  const open = useValue(() =>
+    section === "downloads" || section === "running"
+      ? openGroupIds(section)
+      : "",
+  );
   if (!ids.length) return null;
+  const rows = sectionRows(section, ids, openGroups(open));
   const title = sectionTitle(section, ids.length);
   const footer = FOOTERS[section];
 
@@ -146,8 +160,20 @@ const SectionView = memo(function SectionView({
       }
       footer={footer ? <Text>{footer}</Text> : undefined}
     >
-      <List.ForEach data={ids} keyExtractor={(id) => id} recycling={false}>
-        {({ item }) => <SectionItem section={section} id={item} />}
+      <List.ForEach
+        data={rows}
+        keyExtractor={(row) => row.key}
+        recycling={false}
+      >
+        {({ item: row }) =>
+          row.kind !== "child" ? (
+            <SectionItem section={section} id={row.id} />
+          ) : row.section === "downloads" ? (
+            <DownloadItem id={row.id} />
+          ) : (
+            <SourceItem {...sourceOf(row.id)} />
+          )
+        }
       </List.ForEach>
     </Section>
   );

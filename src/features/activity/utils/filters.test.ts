@@ -73,6 +73,67 @@ describe("activity filters", () => {
     expect(rows[200]).toMatchObject({ kind: "item", index: 199, count: 200 });
   });
 
+  test("toRows puts an open group's chapters under it", () => {
+    const rows = toRows(ids({ downloads: ["1/a", "2/a"] }), "downloads", {
+      "1/a": ["1/a/x", "1/a/y"],
+    });
+    expect(rows.map((r) => r.key)).toEqual([
+      "header-downloads",
+      "downloads:1/a",
+      "child:downloads:1/a/x",
+      "child:downloads:1/a/y",
+      "downloads:2/a",
+    ]);
+    expect(rows[1]).toMatchObject({ index: 0, count: 2, last: false });
+    expect(rows[3]).toMatchObject({
+      kind: "child",
+      section: "downloads",
+      index: 1,
+      count: 2,
+    });
+    expect(rows.map((r) => r.kind !== "header" && r.last)).toEqual([
+      false,
+      false,
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  test("toRows ends the section on the last open group's last chapter", () => {
+    const rows = toRows(ids({ downloads: ["1/a"] }), "all", {
+      "1/a": ["1/a/x"],
+    });
+    expect(rows.map((r) => r.kind !== "header" && r.last)).toEqual([
+      false,
+      false,
+      true,
+    ]);
+  });
+
+  test("toRows opens only download and running groups", () => {
+    const rows = toRows(ids({ entries: ["1/a"] }), "all", { "1/a": ["x"] });
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toMatchObject({ kind: "item", last: true });
+  });
+
+  test("toRows puts an open running manga's sources under it", () => {
+    const rows = toRows(ids({ running: ["12"] }), "all", {
+      "12": ["12/s1", "12/s2"],
+    });
+    expect(rows.map((r) => r.key)).toEqual([
+      "header-running",
+      "running:12",
+      "child:running:12/s1",
+      "child:running:12/s2",
+    ]);
+    expect(rows[3]).toMatchObject({
+      kind: "child",
+      section: "running",
+      last: true,
+    });
+  });
+
   test("emptyKind tells a filter with nothing from an idle queue", () => {
     const some = ids({ entries: ["4"] });
     expect(emptyKind(some, "downloads", false)).toBe("filter");

@@ -16,9 +16,15 @@ mock.module("@/state/observable-persist", () => ({
 }));
 
 const { downloadQueue$ } = await import("@/features/downloads");
-const { canMoveUp, downloadsFailed, downloadsView$, hasScans } = await import(
-  "./state"
-);
+const {
+  canMoveUp,
+  downloadsFailed,
+  downloadsView$,
+  expanded$,
+  hasScans,
+  openGroupIds,
+  openGroups,
+} = await import("./state");
 const { downloadIds, groupDownloadIds } = await import(
   "@/features/activity/utils/ids"
 );
@@ -35,6 +41,7 @@ const entry = (key: string, order: number, state: State) => ({
 
 afterEach(() => {
   downloadQueue$.set({});
+  expanded$.set({});
 });
 
 describe("downloads", () => {
@@ -60,6 +67,25 @@ describe("downloads", () => {
     expect(downloadIds()).toBe("41/source-1,41/s2,42/source-1");
     expect(groupDownloadIds("41/source-1")).toBe("k2,k1");
     expect(groupDownloadIds("41/s2")).toBe("k3");
+  });
+
+  test("list an open group's chapters in queue order", () => {
+    downloadQueue$.set({
+      k1: entry("k1", 2, "queued"),
+      k2: entry("k2", 0, "running"),
+      k3: { ...entry("k3", 1, "queued"), source: { id: "s2", name: "B" } },
+    });
+    expect(openGroupIds()).toBe("");
+    expanded$["41/source-1"].set(true);
+    expanded$["41/gone"].set(true);
+    expect(openGroupIds()).toBe("41/source-1:k2,k1");
+    expect(openGroups(openGroupIds())).toEqual({ "41/source-1": ["k2", "k1"] });
+    expanded$["41/s2"].set(true);
+    expect(openGroups(openGroupIds())).toEqual({
+      "41/source-1": ["k2", "k1"],
+      "41/s2": ["k3"],
+    });
+    expect(openGroups("")).toEqual({});
   });
 
   test("move up only past a queued entry", () => {

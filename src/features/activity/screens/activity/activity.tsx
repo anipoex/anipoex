@@ -31,13 +31,20 @@ import { downloadsPaused$ } from "@/features/downloads";
 import { useSettingsSplit } from "@/features/settings/components/settings-shell";
 import { useHeaderScroll } from "@/hooks/use-header-scroll";
 import { ActivityToolbar } from "./components/activity-toolbar";
+import { DownloadItem } from "./components/download-item";
 import { SectionItem } from "./components/section-item";
+import { SourceItem } from "./components/source-item";
 import { StatusCard } from "./components/status-card";
 import { ALL_CAUGHT_UP } from "./utils/all-caught-up";
 import type { HeaderAction } from "./utils/download-actions";
 import { headerActions, NO_DOWNLOADS } from "./utils/header-actions";
 import { SECTION_DESCRIPTIONS, sectionTitle } from "./utils/section-header";
-import { downloadsFailed } from "./utils/state";
+import {
+  downloadsFailed,
+  openGroupIds,
+  openGroups,
+  sourceOf,
+} from "./utils/state";
 import { statusMode } from "./utils/status-mode";
 
 /** Everything that runs or waits: scans, downloads, AniList changes, sync. */
@@ -45,6 +52,7 @@ export function Activity() {
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
   const ids = useActivityIds();
+  const open = useValue(openGroupIds);
   const mode = useValue(statusMode);
   const headerScroll = useHeaderScroll();
   const headerHeight = useHeaderHeight();
@@ -54,7 +62,10 @@ export function Activity() {
 
   const filter = parseFilter(params.filter);
   const counts = useMemo(() => countsOf(ids), [ids]);
-  const rows = useMemo(() => toRows(ids, filter), [ids, filter]);
+  const rows = useMemo(
+    () => toRows(ids, filter, openGroups(open)),
+    [ids, filter, open],
+  );
   const stickyIndices = useMemo(() => headerIndices(rows), [rows]);
   const empty = emptyKind(ids, filter, mode !== "");
 
@@ -88,7 +99,7 @@ export function Activity() {
             data={rows}
             keyExtractor={(row) => row.key}
             getItemType={(row) =>
-              row.kind === "header" ? "header" : row.section
+              row.kind === "header" ? row.kind : `${row.kind}-${row.section}`
             }
             stickyHeaderConfig={{ offset: headerHeight }}
             stickyHeaderIndices={stickyIndices}
@@ -136,17 +147,30 @@ export function Activity() {
                 <Frame
                   className={cn(
                     "gutters mx-gx lg:ml-gx rounded-t-none border-t-0 md:ml-4",
-                    row.index === row.count - 1
-                      ? "mb-4"
-                      : "rounded-b-none border-b-0",
+                    row.last ? "mb-4" : "rounded-b-none border-b-0",
                   )}
                 >
-                  <Frame.Panel
-                    data-attached="column"
-                    className={cn(row.index > 0 && "rounded-t-none!")}
-                  >
-                    <SectionItem section={row.section} id={row.id} />
-                  </Frame.Panel>
+                  {row.kind === "child" ? (
+                    <Frame.Panel
+                      data-attached="column"
+                      className="rounded-t-none! border-t-0"
+                    >
+                      <View className="bg-muted/40">
+                        {row.section === "downloads" ? (
+                          <DownloadItem id={row.id} />
+                        ) : (
+                          <SourceItem {...sourceOf(row.id)} />
+                        )}
+                      </View>
+                    </Frame.Panel>
+                  ) : (
+                    <Frame.Panel
+                      data-attached="column"
+                      className={cn(row.index > 0 && "rounded-t-none!")}
+                    >
+                      <SectionItem section={row.section} id={row.id} />
+                    </Frame.Panel>
+                  )}
                 </Frame>
               )
             }

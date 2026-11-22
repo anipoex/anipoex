@@ -1,5 +1,10 @@
 import { Button, HStack, Spacer, SwipeActions } from "@expo/ui/swift-ui";
-import { foregroundStyle, lineLimit, tint } from "@expo/ui/swift-ui/modifiers";
+import {
+  foregroundStyle,
+  lineLimit,
+  padding,
+  tint,
+} from "@expo/ui/swift-ui/modifiers";
 import { useValue } from "@legendapp/state/react";
 import { memo } from "react";
 import { ROW_FILL } from "@/components/native/swift-ui/constants";
@@ -15,6 +20,9 @@ import { stopSource } from "../../utils/actions";
 import { isBusy, sourceStatus } from "../../utils/progress";
 import { sourceMenu } from "../../utils/row-menu";
 import type { SourceItemProps } from "./source-item";
+
+// Under its manga's row, as a disclosure group's content sits.
+const MODIFIERS = [padding({ leading: 20 }), ...ROW_FILL];
 
 export const SourceItem = memo(function SourceItem({
   mangaId,
@@ -33,7 +41,7 @@ export const SourceItem = memo(function SourceItem({
     status.tone
   ];
   const row = (
-    <HStack spacing={12} modifiers={ROW_FILL}>
+    <HStack spacing={12} modifiers={MODIFIERS}>
       <SourceTile
         initials={mark.initials}
         iconUrl={mark.iconUrl}

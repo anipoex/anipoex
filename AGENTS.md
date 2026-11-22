@@ -42,7 +42,7 @@ Legend State gotchas:
 # Lists
 
 - Replacing a list with rebuilt objects re-renders every item: keep unchanged items as the same object (`keepUnchanged` in `extensions.ts`).
-- `List.ForEach` / `LazyColumn.Items` recycle rows by slot: an insert or removal shifts every following slot, so those rows re-render whatever their props. `recycling={false}` keys by item, for short lists with per-row actions.
+- `List.ForEach` / `LazyColumn.Items` recycle rows by slot: an insert or removal shifts every following slot, so those rows re-render whatever their props. `recycling={false}` keys by item, for short lists with per-row actions, but mounts every row in React at once (`StaticItems` in `@expo/ui`'s `LazyItems`, `StaticListForEach` in `List.ForEach`).
 - A SwiftUI `LazyHStack.ForEach` (recycling) in a horizontal `ScrollView` draws nothing until the `LazyHStack` has a height: its placeholders are 0 tall, so no item is ever measured. Give the stack `frame({ height })` when the cards are a fixed size, or `frame({ minHeight })` of the cover when their text varies, and the row grows to fit (`home/components/rail-section/rail-section.ios.tsx`).
 - On web the house `LegendList` takes the library's `columnWrapperStyle` gap, which pads the end of every cell, the last one included, and is measured into it: a rail's end padding is its start minus the gap (`ps-4 pe-1` for a gap of 12), and `estimatedItemSize` is the card alone, since the library adds the gap (`home/components/rail-section/rail-section.tsx`).
 - Inside a `Host`, a parent re-render re-runs every row callback and a new `data` array bumps the list's revision: keep state out of the list's parent.

@@ -1,11 +1,7 @@
+import { Button, HStack, SwipeActions, VStack } from "@expo/ui/swift-ui";
 import {
-  Button,
-  DisclosureGroup,
-  HStack,
-  SwipeActions,
-  VStack,
-} from "@expo/ui/swift-ui";
-import {
+  accessibilityValue,
+  buttonStyle,
   clipShape,
   foregroundStyle,
   frame,
@@ -18,10 +14,9 @@ import { memo } from "react";
 import { ROW_FILL } from "@/components/native/swift-ui/constants";
 import { Image } from "@/components/native/swift-ui/image";
 import { Text } from "@/components/native/swift-ui/text";
-import { Icons, sfSymbol } from "@/components/ui/icon";
+import { Icon, Icons, sfSymbol } from "@/components/ui/icon";
 import { ContextMenu } from "@/components/ui/menu";
 import { Progress } from "@/components/ui/progress";
-import { split } from "@/features/activity/utils/state";
 import { MarkRail } from "@/features/manga/components/mark-rail";
 import { activeScans$ } from "@/features/manga/state/active-scans";
 import { orderMarks } from "@/features/manga/utils/scan-activity/utils/marks";
@@ -29,8 +24,7 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { stopManga } from "../../utils/actions";
 import { scanProgress } from "../../utils/progress";
 import { runningMenu } from "../../utils/row-menu";
-import { expanded$ } from "../../utils/state";
-import { SourceItem } from "../source-item";
+import { expanded$, toggleExpanded } from "../../utils/state";
 import type { RunningItemProps } from "./running-item";
 
 export const RunningItem = memo(function RunningItem({
@@ -45,69 +39,64 @@ export const RunningItem = memo(function RunningItem({
   const open = () => router.navigate(`/manga/${id}`);
 
   return (
-    <DisclosureGroup
-      isExpanded={expanded}
-      onIsExpandedChange={(open) => expanded$[mangaId].set(open)}
-    >
-      <DisclosureGroup.Label>
-        <SwipeActions>
-          <ContextMenu items={runningMenu(id, { expanded, open })}>
-            <HStack spacing={12} modifiers={ROW_FILL}>
-              {cover ? (
-                <Image
-                  source={{ uri: cover }}
-                  modifiers={[
-                    frame({ width: 34, height: 48 }),
-                    clipShape("roundedRectangle", 5),
-                  ]}
-                />
-              ) : null}
-              <VStack alignment="leading" spacing={4}>
-                <Text weight="medium" modifiers={[lineLimit(1)]}>
-                  {name}
-                </Text>
-                <Computed>
-                  {() => {
-                    const marks = Object.values(scan$.marks.get() ?? {});
-                    const { value, line } = scanProgress(marks);
-                    return (
-                      <VStack alignment="leading" spacing={4}>
-                        {!expanded && <MarkRail marks={orderMarks(marks)} />}
-                        <Progress value={value} maxValue={1} size="sm" />
-                        <Text
-                          textStyle="subheadline"
-                          modifiers={[foregroundStyle("secondary")]}
-                        >
-                          {line}
-                        </Text>
-                      </VStack>
-                    );
-                  }}
-                </Computed>
-              </VStack>
-            </HStack>
-          </ContextMenu>
-          <SwipeActions.Actions edge="trailing" allowsFullSwipe={false}>
-            <Button
-              label="Stop"
-              systemImage={sfSymbol(Icons.stop)}
-              modifiers={[tint(destructive)]}
-              onPress={() => stopManga(id)}
+    <SwipeActions>
+      <ContextMenu items={runningMenu(id, { expanded, open })}>
+        <Button
+          onPress={() => toggleExpanded(id)}
+          modifiers={[
+            buttonStyle("plain"),
+            accessibilityValue(expanded ? "Expanded" : "Collapsed"),
+          ]}
+        >
+          <HStack spacing={12} modifiers={ROW_FILL}>
+            {cover ? (
+              <Image
+                source={{ uri: cover }}
+                modifiers={[
+                  frame({ width: 34, height: 48 }),
+                  clipShape("roundedRectangle", 5),
+                ]}
+              />
+            ) : null}
+            <VStack alignment="leading" spacing={4}>
+              <Text weight="medium" modifiers={[lineLimit(1)]}>
+                {name}
+              </Text>
+              <Computed>
+                {() => {
+                  const marks = Object.values(scan$.marks.get() ?? {});
+                  const { value, line } = scanProgress(marks);
+                  return (
+                    <VStack alignment="leading" spacing={4}>
+                      {!expanded && <MarkRail marks={orderMarks(marks)} />}
+                      <Progress value={value} maxValue={1} size="sm" />
+                      <Text
+                        textStyle="subheadline"
+                        modifiers={[foregroundStyle("secondary")]}
+                      >
+                        {line}
+                      </Text>
+                    </VStack>
+                  );
+                }}
+              </Computed>
+            </VStack>
+            <Icon
+              name={expanded ? Icons.chevronDown : Icons.chevronRight}
+              size={13}
+              muted
             />
-          </SwipeActions.Actions>
-        </SwipeActions>
-      </DisclosureGroup.Label>
-      {expanded && <SourceRows mangaId={mangaId} />}
-    </DisclosureGroup>
+          </HStack>
+        </Button>
+      </ContextMenu>
+      <SwipeActions.Actions edge="trailing" allowsFullSwipe={false}>
+        <Button
+          label="Stop"
+          systemImage={sfSymbol(Icons.stop)}
+          modifiers={[tint(destructive)]}
+          onPress={() => stopManga(id)}
+        />
+      </SwipeActions.Actions>
+    </SwipeActions>
   );
 });
-
-function SourceRows({ mangaId }: RunningItemProps) {
-  const ids = useValue(() =>
-    Object.keys(activeScans$[mangaId].marks.get(true) ?? {}).join(),
-  );
-
-  return split(ids).map((sourceId) => (
-    <SourceItem key={sourceId} mangaId={mangaId} sourceId={sourceId} />
-  ));
-}

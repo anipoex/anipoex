@@ -1,5 +1,10 @@
 import { Button, HStack, SwipeActions, VStack } from "@expo/ui/swift-ui";
-import { foregroundStyle, lineLimit, tint } from "@expo/ui/swift-ui/modifiers";
+import {
+  foregroundStyle,
+  lineLimit,
+  padding,
+  tint,
+} from "@expo/ui/swift-ui/modifiers";
 import { Computed } from "@legendapp/state/react";
 import { memo } from "react";
 import { ROW_FILL } from "@/components/native/swift-ui/constants";
@@ -20,6 +25,9 @@ import { downloadRowMenu } from "../../utils/row-menu";
 import type { DownloadItemProps } from "./download-item";
 import { useDownloadItem } from "./hooks/use-download-item";
 
+// Under its group's row, as a disclosure group's content sits.
+const MODIFIERS = [padding({ leading: 20 }), ...ROW_FILL];
+
 export const DownloadItem = memo(function DownloadItem({
   id,
 }: DownloadItemProps) {
@@ -29,7 +37,7 @@ export const DownloadItem = memo(function DownloadItem({
   return (
     <SwipeActions>
       <ContextMenu items={downloadRowMenu(id, { state, canMoveUp })}>
-        <HStack spacing={12} modifiers={ROW_FILL}>
+        <HStack spacing={12} modifiers={MODIFIERS}>
           <VStack alignment="leading" spacing={4}>
             <Text modifiers={[lineLimit(1)]}>{chapter}</Text>
             {state === "running" ? (

@@ -5,11 +5,9 @@ import { Button } from "panelui-web/button";
 import { Frame } from "panelui-web/frame";
 import { memo } from "react";
 import { View } from "react-native";
-import { AnimatedVisibility } from "@/components/ui/animated-visibility";
 import { Icon, Icons } from "@/components/ui/icon";
 import { ContextMenu } from "@/components/ui/menu";
 import { Progress } from "@/components/ui/progress";
-import { split } from "@/features/activity/utils/state";
 import { MarkRail } from "@/features/manga/components/mark-rail";
 import { activeScans$ } from "@/features/manga/state/active-scans";
 import { orderMarks } from "@/features/manga/utils/scan-activity/utils/marks";
@@ -17,7 +15,6 @@ import { stopManga } from "../../utils/actions";
 import { scanProgress } from "../../utils/progress";
 import { runningMenu } from "../../utils/row-menu";
 import { expanded$, toggleExpanded } from "../../utils/state";
-import { SourceItem } from "../source-item";
 
 export interface RunningItemProps {
   mangaId: string;
@@ -99,23 +96,6 @@ export const RunningItem = memo(function RunningItem({
           </Button>
         </Frame.Actions>
       </View>
-      <AnimatedVisibility visible={expanded}>
-        {expanded && <SourceList mangaId={mangaId} />}
-      </AnimatedVisibility>
     </View>
   );
 });
-
-function SourceList({ mangaId }: RunningItemProps) {
-  const ids = useValue(() =>
-    Object.keys(activeScans$[mangaId].marks.get(true) ?? {}).join(),
-  );
-
-  return (
-    <View className="bg-muted/40">
-      {split(ids).map((sourceId) => (
-        <SourceItem key={sourceId} mangaId={mangaId} sourceId={sourceId} />
-      ))}
-    </View>
-  );
-}
