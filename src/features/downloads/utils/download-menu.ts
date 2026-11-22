@@ -118,7 +118,11 @@ export function downloadMenu({
     : [];
 
   return {
-    menu: { label: "Download", items: [...items, ...cancel, remove] },
+    menu: {
+      label: "Download",
+      icon: Icons.download,
+      items: [...items, ...cancel, remove],
+    },
     remove,
   };
 }
@@ -161,6 +165,7 @@ export function deferredDownloadMenu(
 
   return {
     label: "Download",
+    icon: Icons.download,
     items: [
       ...PICKS.map(({ label, pick }) => ({
         label,
