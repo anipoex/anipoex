@@ -10,6 +10,7 @@ import { useThemeM3Colors } from "@/hooks/use-theme/use-theme.android";
 import { stopAll } from "../../utils/actions";
 import { hasScans } from "../../utils/state";
 import type { ActivityToolbarProps } from "./activity-toolbar";
+import { FILTER_ICONS } from "./constants";
 
 /** The filter menu, tinted while set, and Stop all while scans run. */
 export function ActivityToolbar({
@@ -30,6 +31,7 @@ export function ActivityToolbar({
           {ACTIVITY_FILTERS.map((f) => (
             <Stack.Toolbar.MenuAction
               key={f}
+              icon={FILTER_ICONS[f]}
               isOn={f === filter}
               onPress={() => onFilterChange(f)}
             >

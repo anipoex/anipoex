@@ -1,6 +1,12 @@
 import { describe, expect, it, mock } from "bun:test";
 import type { SourceManga } from "@/features/extensions";
-import { cardMenu } from "./card-menu";
+
+// The registry requires native assets; the menu only needs a name per icon.
+mock.module("@/components/ui/icon", () => ({
+  Icons: new Proxy({}, { get: (_, name) => String(name) }),
+}));
+
+const { cardMenu } = await import("./card-menu");
 
 const manga = {
   url: "/1",

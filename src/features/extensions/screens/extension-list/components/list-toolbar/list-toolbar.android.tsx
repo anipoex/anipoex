@@ -3,6 +3,7 @@ import { Toolbar } from "@/components/layout/toolbar";
 import { Icons } from "@/components/ui/icon";
 import { EXTENSION_FILTERS, FILTER_TITLES } from "@/features/extensions";
 import { useThemeM3Colors } from "@/hooks/use-theme/use-theme.android";
+import { FILTER_ICONS } from "./constants";
 import type { ListToolbarProps } from "./list-toolbar";
 
 /** Android: language and filter as menus, tinted while set. */
@@ -42,6 +43,7 @@ export function ListToolbar({
           {EXTENSION_FILTERS.map((f) => (
             <Stack.Toolbar.MenuAction
               key={f}
+              icon={FILTER_ICONS[f]}
               isOn={f === filter}
               onPress={() => onFilterChange(f)}
             >

@@ -38,19 +38,25 @@ const openHistory = () => router.push("/manga/history");
 
 const ACTIVITY_ITEM = {
   label: "Activity",
+  icon: Icons.update,
   onPress: () => router.push("/settings/activity?filter=scans"),
 };
 const SCAN_ITEMS = [
-  { label: "Scan for new chapters", onPress: () => void scanReading() },
+  {
+    label: "Scan for new chapters",
+    icon: Icons.scanList,
+    onPress: () => void scanReading(),
+  },
   {
     label: "Rescan everything",
+    icon: Icons.refresh,
     onPress: () => void scanReading({ everything: true }),
   },
   ACTIVITY_ITEM,
 ];
 const SCANNING_ITEMS = [
   ACTIVITY_ITEM,
-  { label: "Stop scan", onPress: stopReadingScan },
+  { label: "Stop scan", icon: Icons.stop, onPress: stopReadingScan },
 ];
 
 function ScanButton({

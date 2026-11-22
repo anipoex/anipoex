@@ -1,6 +1,12 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 import type { ExcludeReason } from "@/features/manga/utils/msu";
-import { presetIds, titleSearchItems } from "./search-presets";
+
+// The registry requires native assets; the menu only needs a name per icon.
+mock.module("@/components/ui/icon", () => ({
+  Icons: new Proxy({}, { get: (_, name) => String(name) }),
+}));
+
+const { presetIds, titleSearchItems } = await import("./search-presets");
 
 const source = (id: string) => ({ id, name: id, initials: "XX" });
 const probe = (matched: boolean, errored = false) => ({

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Chapter } from "@/features/manga/utils/to-chapters";
 import { chapterHash } from "./paths";
-import { pickChapters, preferredScanlator } from "./pick-chapters";
+import { pickChapters, pickFlags, preferredScanlator } from "./pick-chapters";
 
 const ch = (
   number: number,
@@ -128,5 +128,26 @@ describe("preferredScanlator", () => {
 
   test("an unnumbered chapter is never the reference", () => {
     expect(preferredScanlator([ch(-1, "A", "x")], 0, none)).toBeNull();
+  });
+});
+
+describe("pickFlags", () => {
+  const list = [3, 2, 2, 1].map((number, i) => ({
+    url: `/c/${number}-${i}`,
+    number,
+  }));
+  const hashes = (...urls: string[]) => new Set(urls.map(chapterHash));
+
+  test("unread while a chapter past progress has no download", () => {
+    expect(pickFlags(list, 1, hashes()).unread).toBe(true);
+    // Either copy of chapter 2 covers it.
+    expect(pickFlags(list, 1, hashes("/c/3-0", "/c/2-2")).unread).toBe(false);
+  });
+
+  test("missing until every number has a download", () => {
+    expect(pickFlags(list, 3, hashes("/c/3-0", "/c/2-1")).missing).toBe(true);
+    expect(
+      pickFlags(list, 3, hashes("/c/3-0", "/c/2-1", "/c/1-3")).missing,
+    ).toBe(false);
   });
 });

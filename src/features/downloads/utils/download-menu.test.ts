@@ -1,5 +1,10 @@
 import { describe, expect, mock, test } from "bun:test";
 
+// The registry requires native assets; the menu only needs a name per icon.
+mock.module("@/components/ui/icon", () => ({
+  Icons: new Proxy({}, { get: (_, name) => String(name) }),
+}));
+
 mock.module("@/state/observable-persist", () => ({
   ObservablePersist: class {
     getTable() {
@@ -15,7 +20,9 @@ mock.module("@/state/observable-persist", () => ({
   },
 }));
 
-const { downloadMenu } = await import("./download-menu");
+const { CONFIRM_ALL_ABOVE, deferredDownloadMenu, downloadMenu } = await import(
+  "./download-menu"
+);
 const { chapterHash } = await import("./paths");
 
 import type { Chapter } from "@/features/manga/utils/to-chapters";
@@ -122,5 +129,137 @@ describe("downloadMenu", () => {
       "source-1",
       done.map((c) => chapterHash(c.id)),
     ]);
+  });
+
+  test("All runs at once up to the threshold", () => {
+    const { row } = build();
+    expect(row("All")?.onPressMode).toBeUndefined();
+  });
+
+  test("All confirms first above the threshold, with the count", () => {
+    const many = Array.from({ length: CONFIRM_ALL_ABOVE + 1 }, (_, i) =>
+      ch(i + 1),
+    );
+    const enqueued: unknown[][] = [];
+    const all = downloadMenu({
+      manga,
+      source,
+      chapters: many,
+      progress: 0,
+      downloadedHashes: new Set(),
+      enqueue: (items) => {
+        enqueued.push(items);
+        return items.length;
+      },
+      start: () => {},
+    }).menu.items.find((i) => i.label === "All");
+    expect(all?.onPressMode).toBe("dialog");
+    expect(all?.dialogConfig?.title).toBe(
+      `Download ${CONFIRM_ALL_ABOVE + 1} chapters?`,
+    );
+    all?.onPress();
+    expect(enqueued[0]).toHaveLength(CONFIRM_ALL_ABOVE + 1);
+  });
+});
+
+describe("deferredDownloadMenu", () => {
+  const args = (
+    messages: string[],
+    enqueued: unknown[][],
+    done = [] as Chapter[],
+  ) => ({
+    manga,
+    source,
+    chapters,
+    progress: 0,
+    downloadedHashes: new Set(done.map((c) => chapterHash(c.id))),
+    notify: (m: string) => messages.push(m),
+    enqueue: (items: unknown[]) => {
+      enqueued.push(items);
+      return items.length;
+    },
+    start: () => {},
+  });
+
+  test("picks wait for unread chapters, All for missing ones", () => {
+    const states = (flags: {
+      unread: boolean;
+      missing: boolean;
+      downloaded: boolean;
+    }) =>
+      deferredDownloadMenu(
+        () => undefined,
+        flags,
+        () => {},
+      ).items.map((i) => !!i.disabled);
+    expect(states({ unread: false, missing: true, downloaded: false })).toEqual(
+      [true, true, true, true, false, true],
+    );
+    expect(states({ unread: true, missing: true, downloaded: true })).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
+    expect(states({ unread: false, missing: false, downloaded: true })).toEqual(
+      [true, true, true, true, true, false],
+    );
+  });
+
+  test("a pick without stored chapters says to open the manga", () => {
+    const messages: string[] = [];
+    const menu = deferredDownloadMenu(
+      () => ({ ...args(messages, []), chapters: [] }),
+      { unread: true, missing: true, downloaded: false },
+      () => {},
+    );
+    menu.items.find((i) => i.label === "Next 5")?.onPress();
+    expect(messages).toEqual(["Open this manga once to load its chapters"]);
+  });
+
+  test("a pick builds the menu when pressed and runs its row", () => {
+    const messages: string[] = [];
+    const enqueued: unknown[][] = [];
+    let built = 0;
+    const menu = deferredDownloadMenu(
+      () => {
+        built++;
+        return args(messages, enqueued);
+      },
+      { unread: true, missing: true, downloaded: false },
+      () => {},
+    );
+    expect(built).toBe(0);
+    menu.items.find((i) => i.label === "Next 5")?.onPress();
+    expect(built).toBe(1);
+    expect(enqueued[0]).toHaveLength(5);
+    expect(messages).toEqual(["Downloading 5 chapters"]);
+  });
+
+  test("a row that confirms goes to confirm, not run", () => {
+    const enqueued: unknown[][] = [];
+    const confirmed: string[] = [];
+    const menu = deferredDownloadMenu(
+      () => args([], enqueued, [ch(1)]),
+      { unread: true, missing: true, downloaded: true },
+      (row) => confirmed.push(row.label),
+    );
+    menu.items.find((i) => i.label === "Delete downloads")?.onPress();
+    expect(confirmed).toEqual(["Delete downloads"]);
+  });
+
+  test("a pick with nothing left says so", () => {
+    const messages: string[] = [];
+    const enqueued: unknown[][] = [];
+    const menu = deferredDownloadMenu(
+      () => args(messages, enqueued, chapters),
+      { unread: true, missing: true, downloaded: true },
+      () => {},
+    );
+    menu.items.find((i) => i.label === "Next chapter")?.onPress();
+    expect(enqueued).toEqual([]);
+    expect(messages).toEqual(["Nothing to download"]);
   });
 });

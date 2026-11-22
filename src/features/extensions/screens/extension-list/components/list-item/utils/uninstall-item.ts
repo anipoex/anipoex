@@ -1,3 +1,4 @@
+import { Icons } from "@/components/ui/icon";
 import type { MenuItem, MenuItemDialogConfig } from "@/components/ui/menu";
 import { type Extension, uninstallExtension } from "@/features/extensions";
 
@@ -12,6 +13,7 @@ export const uninstallDialog = (e: Extension): MenuItemDialogConfig => ({
 export function uninstallItem(e: Extension): MenuItem {
   return {
     label: "Uninstall",
+    icon: Icons.trash,
     destructive: true,
     onPress: () => uninstallExtension(e.id),
     onPressMode: "dialog",

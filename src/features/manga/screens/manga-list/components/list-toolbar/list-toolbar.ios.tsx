@@ -16,7 +16,7 @@ import { listOptions$ } from "@/features/manga/state/list-options";
 import { hasActiveFilters } from "@/features/manga/utils/list-options";
 import { MediaListStatus } from "@/graphql/types.generated";
 import { useThemeColor } from "@/hooks/use-theme-color";
-import { CUSTOM_LIST_SYMBOL, LIST_SYMBOLS } from "../../constants";
+import { LIST_ICONS } from "../../constants";
 import { openOptionsSheet } from "../options-sheet";
 import type { ListToolbarProps } from "./list-toolbar";
 
@@ -52,7 +52,7 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
             return (
               <Stack.Toolbar.MenuAction
                 key={key}
-                icon={LIST_SYMBOLS[key]}
+                icon={LIST_ICONS[key]}
                 isOn={key === status}
                 subtitle={count == null ? undefined : mangaCount(count)}
                 onPress={() => onSelect(key)}
@@ -66,7 +66,7 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
           {customLists?.map(({ key, name, count }) => (
             <Stack.Toolbar.MenuAction
               key={key}
-              icon={CUSTOM_LIST_SYMBOL}
+              icon={Icons.customList}
               isOn={key === status}
               subtitle={mangaCount(count)}
               onPress={() => onSelect(key)}
@@ -112,20 +112,26 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
       >
         <Stack.Toolbar.MenuAction
           hidden={scanning}
+          icon={Icons.scanList}
           onPress={() => scanReading()}
         >
           Scan for new chapters
         </Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction
           hidden={scanning}
+          icon={Icons.refresh}
           onPress={() => scanReading({ everything: true })}
         >
           Rescan everything
         </Stack.Toolbar.MenuAction>
-        <Stack.Toolbar.MenuAction onPress={openActivity}>
+        <Stack.Toolbar.MenuAction icon={Icons.update} onPress={openActivity}>
           Activity
         </Stack.Toolbar.MenuAction>
-        <Stack.Toolbar.MenuAction hidden={!scanning} onPress={stopReadingScan}>
+        <Stack.Toolbar.MenuAction
+          hidden={!scanning}
+          icon={Icons.stop}
+          onPress={stopReadingScan}
+        >
           Stop scan
         </Stack.Toolbar.MenuAction>
       </Stack.Toolbar.Menu>

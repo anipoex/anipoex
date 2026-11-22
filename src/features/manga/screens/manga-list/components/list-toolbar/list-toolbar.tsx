@@ -29,6 +29,7 @@ import type { ListKey } from "@/features/manga/utils/parse-list";
 import { askToNotify } from "@/features/manga/utils/scan-activity";
 import { MediaListStatus } from "@/graphql/types.generated";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { LIST_ICONS } from "../../constants";
 import { openOptionsSheet } from "../options-sheet";
 
 const openActivity = () => router.push("/settings/activity?filter=scans");
@@ -88,6 +89,7 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
           {MANGA_STATUS_ENTRIES.map(([key, name]) => (
             <Stack.Toolbar.MenuAction
               key={key}
+              icon={LIST_ICONS[key]}
               isOn={key === status}
               onPress={() => onSelect(key)}
             >
@@ -97,13 +99,17 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
           {customLists?.map(({ key, name, count }) => (
             <Stack.Toolbar.MenuAction
               key={key}
+              icon={Icons.customList}
               isOn={key === status}
               onPress={() => onSelect(key)}
             >
               {`${name} (${count})`}
             </Stack.Toolbar.MenuAction>
           ))}
-          <Stack.Toolbar.MenuAction onPress={openCustomLists}>
+          <Stack.Toolbar.MenuAction
+            icon={Icons.listEdit}
+            onPress={openCustomLists}
+          >
             Manage lists…
           </Stack.Toolbar.MenuAction>
         </Stack.Toolbar.Menu>
@@ -142,21 +148,24 @@ export function ListToolbar({ status, list$, onSelect }: ListToolbarProps) {
         >
           <Stack.Toolbar.MenuAction
             hidden={scanning}
+            icon={Icons.scanList}
             onPress={() => scanWithNotice(false)}
           >
             Scan for new chapters
           </Stack.Toolbar.MenuAction>
           <Stack.Toolbar.MenuAction
             hidden={scanning}
+            icon={Icons.refresh}
             onPress={() => scanWithNotice(true)}
           >
             Rescan everything
           </Stack.Toolbar.MenuAction>
-          <Stack.Toolbar.MenuAction onPress={openActivity}>
+          <Stack.Toolbar.MenuAction icon={Icons.update} onPress={openActivity}>
             Activity
           </Stack.Toolbar.MenuAction>
           <Stack.Toolbar.MenuAction
             hidden={!scanning}
+            icon={Icons.stop}
             onPress={stopReadingScan}
           >
             Stop scan

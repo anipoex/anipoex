@@ -1,3 +1,4 @@
+import { Icons } from "@/components/ui/icon";
 import type { MenuAction } from "@/components/ui/menu";
 import type { ProviderProbe } from "@/features/manga/utils/msu";
 import type { ExcludedRow, SourceRow } from "./split-sources";
@@ -59,12 +60,14 @@ export function titleSearchItems(
       label: running.length
         ? `Add ${preset} (+${ids.length})`
         : `Search ${preset} (${ids.length})`,
+      icon: Icons.searchTitles,
       onPress: () => start(ids),
     })),
     ...(running.length
       ? [
           {
             label: `Stop searching (${running.length})`,
+            icon: Icons.searchTitlesOff,
             destructive: true,
             onPress: stop,
           },

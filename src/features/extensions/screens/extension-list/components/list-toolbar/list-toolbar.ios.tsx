@@ -1,21 +1,13 @@
 import { Stack, useRouter } from "expo-router";
-import type { SFSymbol } from "expo-symbols";
 import { Icons } from "@/components/ui/icon";
 import {
   EXTENSION_FILTERS,
-  type ExtensionFilter,
   extensionCount,
   FILTER_TITLES,
 } from "@/features/extensions";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { FILTER_ICONS } from "./constants";
 import type { ListToolbarProps } from "./list-toolbar";
-
-const FILTER_SYMBOLS: Record<ExtensionFilter, SFSymbol> = {
-  all: "puzzlepiece.extension",
-  installed: "checkmark.circle",
-  available: "arrow.down.circle",
-  updates: "arrow.clockwise",
-};
 
 /**
  * Like the iOS manga list: one menu picks the filter and, in a submenu, the
@@ -44,7 +36,7 @@ export function ListToolbar({
           {EXTENSION_FILTERS.map((f) => (
             <Stack.Toolbar.MenuAction
               key={f}
-              icon={FILTER_SYMBOLS[f]}
+              icon={FILTER_ICONS[f]}
               isOn={f === filter}
               subtitle={extensionCount(counts[f])}
               onPress={() => onFilterChange(f)}

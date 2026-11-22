@@ -93,6 +93,7 @@ export function useSyncSection() {
       : []),
     {
       label: "Disconnect",
+      icon: Icons.offline,
       destructive: true,
       onPress: () => void disconnectGitHub(),
       onPressMode: "dialog",
@@ -106,9 +107,14 @@ export function useSyncSection() {
   ];
   const folderMenu: MenuItem[] = [
     { label: "Sync now", icon: Icons.refresh, onPress: syncNow },
-    { label: "Change folder", onPress: () => void chooseFolder() },
+    {
+      label: "Change folder",
+      icon: Icons.folder,
+      onPress: () => void chooseFolder(),
+    },
     {
       label: "Stop syncing",
+      icon: Icons.offline,
       destructive: true,
       onPress: () => void stopFolder(),
       onPressMode: "dialog",

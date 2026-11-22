@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Toolbar } from "@/components/layout/toolbar";
 import { Dialog } from "@/components/ui/dialog";
 import { Icons } from "@/components/ui/icon";
+import type { MenuAction } from "@/components/ui/menu";
 import type { SourceMatch } from "@/features/manga/utils/source-match";
 import type { Chapter } from "@/features/manga/utils/to-chapters";
 import type { MangaDetail } from "@/features/manga/utils/to-detail";
@@ -33,9 +34,11 @@ export function DetailToolbar({
 }: DetailToolbarProps) {
   const mutedForeground = useThemeColor("muted-foreground");
   const download = useDownloadMenu(manga, chapters, match, sourceName);
-  const [deleting, setDeleting] = useState(false);
+  // A toolbar menu can't hang a dialog: confirming rows open this one.
+  const [confirming, setConfirming] = useState<MenuAction | null>(null);
+  const config =
+    confirming?.onPressMode === "dialog" ? confirming.dialogConfig : undefined;
   const url = `https://anilist.co/manga/${id}`;
-  const remove = download?.remove;
 
   return (
     <>
@@ -66,10 +69,14 @@ export function DetailToolbar({
                 {download.menu.items.map((item) => (
                   <Stack.Toolbar.MenuAction
                     key={item.label}
+                    // From `Icons`, typed as the menu's wider `IconName`.
+                    icon={item.icon as typeof Icons.download}
                     destructive={item.destructive}
                     disabled={item.disabled}
                     onPress={
-                      item === remove ? () => setDeleting(true) : item.onPress
+                      item.onPressMode === "dialog"
+                        ? () => setConfirming(item)
+                        : item.onPress
                     }
                   >
                     {item.label}
@@ -98,13 +105,15 @@ export function DetailToolbar({
           </Stack.Toolbar.Menu>
         </Stack.Toolbar>
       </Toolbar>
-      {remove?.onPressMode === "dialog" && (
+      {download && (
         <Dialog
-          open={deleting}
-          onOpenChange={setDeleting}
-          {...remove.dialogConfig}
-          role="destructive"
-          onConfirm={remove.onPress}
+          open={!!config}
+          onOpenChange={(open) => !open && setConfirming(null)}
+          title={config?.title ?? ""}
+          description={config?.description}
+          confirmLabel={config?.confirmLabel ?? ""}
+          role={confirming?.destructive ? "destructive" : undefined}
+          onConfirm={() => confirming?.onPress()}
         />
       )}
     </>

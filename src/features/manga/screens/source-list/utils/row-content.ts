@@ -1,3 +1,4 @@
+import { Icons } from "@/components/ui/icon";
 import type {
   MenuAction,
   MenuItemDialogConfig,
@@ -10,6 +11,14 @@ import type { SourceActions } from "../hooks/use-source-actions";
 import type { SourceStatus } from "./source-status";
 
 const ORDER = Object.keys(REASONS) as ExcludeReason[];
+
+const REASON_ICONS = {
+  outdated: Icons.hourglass,
+  "bad-numbering": Icons.warning,
+  "not-matched": Icons.searchTitlesOff,
+  "error-found": Icons.error,
+  other: Icons.exclude,
+} satisfies Record<ExcludeReason, unknown>;
 
 /** The confirm dialog of the Excluded menu's Reset all. */
 const RESET_DIALOG: MenuItemDialogConfig = {
@@ -31,12 +40,14 @@ export const excludedMenuItems = (
 ): MenuAction[] => [
   {
     label: searching ? "Stop searching" : "Search titles",
+    icon: searching ? Icons.searchTitlesOff : Icons.searchTitles,
     onPress: () => actions.searchIn(excluded.map((row) => row.source.id)),
   },
   ...(excluded.some((row) => !row.pinned)
     ? [
         {
           label: "Retry auto-excluded",
+          icon: Icons.refresh,
           disabled: busy,
           onPress: actions.retryAuto,
         },
@@ -44,6 +55,7 @@ export const excludedMenuItems = (
     : []),
   {
     label: "Reset all",
+    icon: Icons.undo,
     destructive: true,
     disabled: busy,
     onPressMode: "dialog",
@@ -60,6 +72,7 @@ export const excludeMenu = (
   label: "Exclude",
   items: excludeReasons(suspicious).map((reason) => ({
     label: REASONS[reason].menu,
+    icon: REASON_ICONS[reason],
     destructive: true,
     onPress: () => onExclude(reason),
   })),

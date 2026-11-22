@@ -12,6 +12,7 @@ import {
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { stopAll } from "../../utils/actions";
 import { hasScans } from "../../utils/state";
+import { FILTER_ICONS } from "./constants";
 
 export interface ActivityToolbarProps {
   counts: ActivityCounts;
@@ -40,6 +41,7 @@ export function ActivityToolbar({
           {ACTIVITY_FILTERS.map((f) => (
             <Stack.Toolbar.MenuAction
               key={f}
+              icon={FILTER_ICONS[f]}
               isOn={f === filter}
               onPress={() => onFilterChange(f)}
             >

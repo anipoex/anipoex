@@ -1,3 +1,4 @@
+import { Icons } from "@/components/ui/icon";
 import type { MenuAction, MenuGroup } from "@/components/ui/menu";
 import type { SourceManga } from "@/features/extensions";
 import type { RailItem } from "../../../utils/rail-items";
@@ -21,19 +22,31 @@ export function cardMenu(
     ? [
         {
           label: "Use as match",
+          icon: Icons.checkCircle,
           disabled: scanning,
           onPress: () => on.setMatch(item.manga),
         },
       ]
     : manual
-      ? [{ label: "Remove match", disabled: scanning, onPress: on.removeMatch }]
+      ? [
+          {
+            label: "Remove match",
+            icon: Icons.closeCircle,
+            disabled: scanning,
+            onPress: on.removeMatch,
+          },
+        ]
       : [];
   return [
     {
       heading: item.manga.title,
       items: [
         ...match,
-        { label: "Open website", onPress: () => on.openPage(item.manga.url) },
+        {
+          label: "Open website",
+          icon: Icons.website,
+          onPress: () => on.openPage(item.manga.url),
+        },
       ],
     },
   ];

@@ -162,6 +162,16 @@ export const Icons = {
     web: "chevron-down",
   }),
 
+  inbox: Icon.select({
+    ios: "tray.full",
+    android: require("@expo/material-symbols/inbox.xml"),
+    web: "inbox",
+  }),
+  extension: Icon.select({
+    ios: "puzzlepiece.extension",
+    android: require("@expo/material-symbols/extension.xml"),
+    web: "puzzle",
+  }),
   repos: Icon.select({
     ios: "shippingbox",
     android: require("@expo/material-symbols/package_2.xml"),
@@ -183,6 +193,26 @@ export const Icons = {
     ios: "checkmark.circle",
     android: require("@expo/material-symbols/check_circle.xml"),
     web: "circle-check",
+  }),
+  downloadCircle: Icon.select({
+    ios: "arrow.down.circle",
+    android: require("@expo/material-symbols/arrow_circle_down.xml"),
+    web: "circle-arrow-down",
+  }),
+  pauseCircle: Icon.select({
+    ios: "pause.circle",
+    android: require("@expo/material-symbols/pause_circle.xml"),
+    web: "circle-pause",
+  }),
+  repeat: Icon.select({
+    ios: "arrow.counterclockwise",
+    android: require("@expo/material-symbols/replay.xml"),
+    web: "rotate-ccw",
+  }),
+  bookmark: Icon.select({
+    ios: "bookmark",
+    android: require("@expo/material-symbols/bookmark.xml"),
+    web: "bookmark",
   }),
   play: Icon.select({
     ios: "play.fill",
@@ -213,6 +243,11 @@ export const Icons = {
     ios: "icloud.slash",
     android: require("@expo/material-symbols/cloud_off.xml"),
     web: "cloud-off",
+  }),
+  cloudSync: Icon.select({
+    ios: "arrow.triangle.2.circlepath.icloud",
+    android: require("@expo/material-symbols/cloud_sync.xml"),
+    web: "cloud-sync",
   }),
   uploading: Icon.select({
     ios: "icloud.and.arrow.up",
@@ -273,6 +308,11 @@ export const Icons = {
     ios: "list.bullet.rectangle",
     android: require("@expo/material-symbols/edit_note.xml"),
     web: "list-plus",
+  }),
+  customList: Icon.select({
+    ios: "list.star",
+    android: require("@expo/material-symbols/list_alt.xml"),
+    web: "list-todo",
   }),
   grid: Icon.select({
     ios: "square.grid.2x2",

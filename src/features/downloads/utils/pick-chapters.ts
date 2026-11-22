@@ -78,3 +78,28 @@ export function preferredScanlator(
   }
   return best?.scanlator ?? null;
 }
+
+/**
+ * Whether any pick past `progress` has a chapter left (`unread`) and whether
+ * All has (`missing`), from a source's stored list as it came: only unread
+ * chapters are hashed, so a grid card can afford it. Numbers are the source's
+ * own, as the card's +N reads them.
+ */
+export function pickFlags(
+  chapters: { url: string; number: number }[],
+  progress: number,
+  downloadedHashes: Set<string>,
+) {
+  const covered = new Map<number, boolean>();
+  for (const c of chapters) {
+    if (!(c.number > progress) || covered.get(c.number)) continue;
+    covered.set(c.number, downloadedHashes.has(chapterHash(c.url)));
+  }
+  const groups = new Set(
+    chapters.map((c) => (c.number < 0 ? c.url : c.number)),
+  );
+  return {
+    unread: [...covered.values()].some((done) => !done),
+    missing: groups.size > downloadedHashes.size,
+  };
+}

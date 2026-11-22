@@ -10,6 +10,7 @@ import {
 } from "@/features/extensions";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import type { ListContentProps } from "../list-content";
+import { FILTER_ICONS } from "./constants";
 
 export type ListToolbarProps = Pick<
   ListContentProps,
@@ -65,6 +66,7 @@ export function ListToolbar({
           {EXTENSION_FILTERS.map((f) => (
             <Stack.Toolbar.MenuAction
               key={f}
+              icon={FILTER_ICONS[f]}
               isOn={f === filter}
               onPress={() => onFilterChange(f)}
             >
