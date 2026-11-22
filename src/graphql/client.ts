@@ -12,7 +12,8 @@ import { CachePersistor } from "apollo3-cache-persist";
 import { OperationTypeNode } from "graphql";
 import { createMMKV } from "react-native-mmkv";
 import { toast } from "@/components/ui/toast";
-import { networkAnswered, networkFailed, onReconnect } from "@/state/network";
+import { network$, networkAnswered, onReconnect } from "@/state/network";
+import { ping } from "@/state/network/system";
 import { session$ } from "@/state/session";
 import { fetchOrNetworkError, isNetworkError, shouldToast } from "./utils";
 
@@ -36,7 +37,8 @@ export const cache = new InMemoryCache({
   },
 });
 
-// Reports before the error reaches the error link, which reads the state.
+// One failed request isn't offline (one left hanging when the app was
+// suspended fails as it resumes): a ping decides.
 const reportingFetch = ((input, init) =>
   fetchOrNetworkError(input, init).then(
     (res) => {
@@ -44,7 +46,7 @@ const reportingFetch = ((input, init) =>
       return res;
     },
     (error: unknown) => {
-      if (isNetworkError(error)) networkFailed();
+      if (isNetworkError(error)) void ping();
       throw error;
     },
   )) as typeof fetch;
@@ -61,8 +63,16 @@ const authLink = new SetContextLink((prevContext) => {
   };
 });
 
-// One extra attempt, then surface it.
-const retryLink = new RetryLink({ attempts: { max: 2 } });
+// One extra attempt, then surface it. A dropped request retries only if the
+// ping it started finds AniList: after a timeout, a retry would double the
+// wait before a save is kept on the device.
+const retryLink = new RetryLink({
+  attempts: {
+    max: 2,
+    retryIf: (error) =>
+      !isNetworkError(error) || ping().then(() => network$.online.peek()),
+  },
+});
 
 const errorLink = new ErrorLink(({ error, operation }) => {
   const context = operation.getContext();

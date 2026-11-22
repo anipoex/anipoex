@@ -1,5 +1,5 @@
 import { useMutation } from "@apollo/client/react";
-import { isNetworkError } from "@/graphql/utils";
+import { isTransient } from "@/graphql/utils";
 import { session$ } from "@/state/session";
 import { failed, succeeded } from "@/utils/haptics";
 import {
@@ -11,7 +11,7 @@ import type { SaveVariables } from "../utils/tracking-form";
 
 /**
  * Never the only feedback: the entry redraws, and the error link toasts. A
- * save kept offline (`queueOffline`) didn't fail, so it gets no failure buzz.
+ * save kept for later (`queueOffline`) didn't fail, so it gets no failure buzz.
  */
 async function felt<T>(work: Promise<T>, queueOffline = false) {
   try {
@@ -19,7 +19,7 @@ async function felt<T>(work: Promise<T>, queueOffline = false) {
     succeeded();
     return result;
   } catch (error) {
-    if (!(queueOffline && isNetworkError(error))) failed();
+    if (!(queueOffline && isTransient(error))) failed();
     throw error;
   }
 }
@@ -53,7 +53,10 @@ export function useSaveTracking(mediaId: number) {
   return {
     saving,
     removing,
-    /** `queueOffline`: the caller keeps the change when the connection drops. */
+    /**
+     * `queueOffline`: the caller keeps the change when AniList can't take it
+     * now (no connection, its rate limit or a server error).
+     */
     save: async (variables: SaveVariables, { queueOffline = false } = {}) => {
       const result = await felt(
         saveEntry({

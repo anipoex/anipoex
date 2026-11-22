@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { CombinedGraphQLErrors } from "@apollo/client/errors";
+import { CombinedGraphQLErrors, ServerError } from "@apollo/client/errors";
 import { MediaListStatus } from "@/graphql/types.generated";
 
 mock.module("@/state/observable-persist", () => ({
@@ -290,13 +290,27 @@ describe("flushPending", () => {
   it("keeps the entry and stops on a network error", async () => {
     keepPending(1, { progress: 12 });
     keepPending(2, { progress: 5 });
+    const offline = new TypeError("Network request failed");
     const send = mock(async () => {
-      throw new TypeError("Network request failed");
+      throw offline;
     });
-    await flushPending(() => 0, send);
+    expect(await flushPending(() => 0, send)).toBe(offline);
     expect(send).toHaveBeenCalledTimes(1);
     expect(pendingEntries$[1].get().error).toBeUndefined();
     expect(pendingEntries$[2].get()).toBeDefined();
+  });
+
+  it("keeps the entry and stops on AniList's rate limit", async () => {
+    keepPending(1, { progress: 12 });
+    const limited = new ServerError("Too Many Requests", {
+      response: new Response("", { status: 429 }),
+      bodyText: "",
+    });
+    const send = mock(async () => {
+      throw limited;
+    });
+    expect(await flushPending(() => 0, send)).toBe(limited);
+    expect(pendingEntries$[1].get().error).toBeUndefined();
   });
 
   it("records other errors and goes on", async () => {

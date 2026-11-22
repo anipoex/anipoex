@@ -4,7 +4,7 @@ import {
   type FuzzyDateInput,
   MediaListStatus,
 } from "@/graphql/types.generated";
-import { isNetworkError } from "@/graphql/utils";
+import { isTransient } from "@/graphql/utils";
 import { ObservablePersist } from "@/state/observable-persist";
 import { toFuzzyDate } from "../utils/fuzzy-date";
 import type { SaveVariables } from "../utils/tracking-form";
@@ -180,13 +180,16 @@ export function effectiveProgress(
   );
 }
 
-let running: Promise<void> | undefined;
+let running: Promise<unknown> | undefined;
 
-/** Sends what the remote doesn't have yet; a second call during a run shares it. */
+/**
+ * Sends what the remote doesn't have yet; a second call during a run shares
+ * it. Resolves to the error that stopped it, one a later send can get past.
+ */
 export function flushPending(
   remoteOf: (mediaId: number) => number | undefined,
   send: (mediaId: number, pending: PendingEntry) => Promise<void>,
-): Promise<void> {
+): Promise<unknown> {
   running ??= run(remoteOf, send).finally(() => {
     running = undefined;
   });
@@ -225,7 +228,7 @@ async function run(
         pendingEntries$[mediaId].delete();
       }
     } catch (error) {
-      if (isNetworkError(error)) return;
+      if (isTransient(error)) return error;
       // Setting a child of a cleared entry would bring it back as a ghost
       if (!pendingEntries$[mediaId].peek()) continue;
       pendingEntries$[mediaId].error.set(

@@ -19,7 +19,7 @@ import {
 } from "@/features/manga/utils/reading-save";
 import type { Chapter } from "@/features/manga/utils/to-chapters";
 import { toSaveVariables } from "@/features/manga/utils/tracking-form";
-import { isNetworkError } from "@/graphql/utils";
+import { isNetworkError, isTransient } from "@/graphql/utils";
 import { markOfflineAnnounced, network$ } from "@/state/network";
 import type { ChapterEndProps } from "../components/chapter-end";
 
@@ -38,6 +38,15 @@ interface Notice {
 const NONE: ChapterEndProps["save"] = { state: "none", changes: [] };
 
 const OFFLINE = "Progress saved on this device. It'll send when you're online.";
+const LATER = "AniList didn't take it now. Progress saved on this device.";
+
+/** Says why a save was kept on the device; a refused one the error link already toasted. */
+function announceKept(error: unknown) {
+  if (!isTransient(error)) return;
+  if (!isNetworkError(error)) return toast(LATER);
+  markOfflineAnnounced();
+  toast(OFFLINE);
+}
 
 /**
  * Saves AniList progress at a chapter's end with the tracking sheet's rules,
@@ -108,13 +117,10 @@ export function useReadingProgress(
     }).then(
       () => settle(saving, { ...saving, state: "saved", position: finish() }),
       (error) => {
-        // Any other failure: useSaveTracking already toasted it.
-        const kept = isNetworkError(error)
-          ? queueProgress(manga.id, entryId, result.after)
-          : undefined;
-        if (!kept) return settle(saving);
-        markOfflineAnnounced();
-        toast(OFFLINE);
+        // Kept whatever the failure: a refused one waits in Activity as Not
+        // sent, with Retry, rather than being lost.
+        const kept = queueProgress(manga.id, entryId, result.after);
+        announceKept(error);
         settle(saving, { ...saving, state: "saved", kept, position: finish() });
       },
     );
@@ -140,9 +146,8 @@ export function useReadingProgress(
         (entry) =>
           settle(saving, { ...saving, state: "saved", createdId: entry?.id }),
         (error) => {
-          if (!isNetworkError(error)) return settle(saving, notice);
-          markOfflineAnnounced();
-          toast(OFFLINE);
+          if (!isTransient(error)) return settle(saving, notice);
+          announceKept(error);
           queue();
         },
       )

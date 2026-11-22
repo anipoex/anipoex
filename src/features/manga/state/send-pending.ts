@@ -1,5 +1,6 @@
 import { AppState } from "react-native";
 import { cache, cacheRestored, client, onAnswered } from "@/graphql/client";
+import { rateLimitWait } from "@/graphql/utils";
 import { network$, onReconnect } from "@/state/network";
 import { session$ } from "@/state/session";
 import { finishOffScreen } from "@/utils/background-time";
@@ -95,10 +96,16 @@ async function send(mediaId: number, pending: PendingEntry) {
   });
 }
 
+// Until then sends wait out AniList's rate limit: every answered query would
+// start one otherwise.
+let holdUntil = 0;
+
 /** Sends the changes kept offline, when signed in. */
 export async function sendPending() {
-  if (network$.online.peek() && session$.token.peek())
-    await flushPending(remoteOf, send);
+  if (!network$.online.peek() || !session$.token.peek()) return;
+  if (Date.now() < holdUntil) return;
+  const wait = rateLimitWait(await flushPending(remoteOf, send));
+  if (wait) holdUntil = Date.now() + wait;
 }
 
 const later = debouncer<void>(() => void sendPending(), 2_000);

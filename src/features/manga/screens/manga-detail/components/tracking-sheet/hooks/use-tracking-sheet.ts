@@ -10,7 +10,7 @@ import {
   toSaveVariables,
   toTrackingForm,
 } from "@/features/manga/utils/tracking-form";
-import { isNetworkError } from "@/graphql/utils";
+import { isTransient } from "@/graphql/utils";
 import { network$ } from "@/state/network";
 import { session$ } from "@/state/session";
 import { succeeded } from "@/utils/haptics";
@@ -72,7 +72,7 @@ export function useTrackingSheet({
         );
       },
       (error) => {
-        if (isNetworkError(error)) {
+        if (isTransient(error)) {
           queueEdit(manga.id, entryId, form, next, shown.current);
           succeeded();
           return;
@@ -95,7 +95,7 @@ export function useTrackingSheet({
       await remove(entryId, { queueOffline: true });
       return true;
     } catch (error) {
-      if (!isNetworkError(error)) return false;
+      if (!isTransient(error)) return false;
       queueRemoval(manga.id, entryId);
       succeeded();
       return true;

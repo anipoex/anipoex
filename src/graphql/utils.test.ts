@@ -3,12 +3,19 @@ import { CombinedGraphQLErrors, ServerError } from "@apollo/client/errors";
 import {
   fetchOrNetworkError,
   isNetworkError,
+  isTransient,
   NetworkError,
+  rateLimitWait,
   shouldToast,
 } from "./utils";
 
 const offline = new TypeError("Network request failed");
 const denied = new CombinedGraphQLErrors({ errors: [{ message: "Denied" }] });
+const status = (code: number, headers?: Record<string, string>) =>
+  new ServerError("x", {
+    response: new Response("", { status: code, headers }),
+    bodyText: "",
+  });
 
 describe("isNetworkError", () => {
   it("is true for a dropped connection", () => {
@@ -39,6 +46,32 @@ describe("isNetworkError", () => {
   });
 });
 
+describe("isTransient", () => {
+  it("is true for what a later send can get past", () => {
+    expect(isTransient(offline)).toBe(true);
+    expect(isTransient(status(429))).toBe(true);
+    expect(isTransient(status(503))).toBe(true);
+  });
+
+  it("is false for a refused change", () => {
+    expect(isTransient(denied)).toBe(false);
+    expect(isTransient(status(400))).toBe(false);
+    expect(isTransient(status(401))).toBe(false);
+  });
+});
+
+describe("rateLimitWait", () => {
+  it("reads Retry-After, or waits a minute without it", () => {
+    expect(rateLimitWait(status(429, { "Retry-After": "30" }))).toBe(30_000);
+    expect(rateLimitWait(status(429))).toBe(60_000);
+  });
+
+  it("is undefined for anything but the rate limit", () => {
+    expect(rateLimitWait(status(503))).toBeUndefined();
+    expect(rateLimitWait(offline)).toBeUndefined();
+  });
+});
+
 describe("shouldToast", () => {
   it("a query that lost the connection stays quiet", () => {
     expect(shouldToast({}, offline, true)).toBe(false);
@@ -47,6 +80,12 @@ describe("shouldToast", () => {
   it("a mutation that lost the connection toasts unless it queues", () => {
     expect(shouldToast({}, offline, false)).toBe(true);
     expect(shouldToast({ queueOffline: true }, offline, false)).toBe(false);
+  });
+
+  it("a mutation that queues stays quiet when AniList is busy", () => {
+    expect(shouldToast({ queueOffline: true }, status(429), false)).toBe(false);
+    expect(shouldToast({}, status(429), false)).toBe(true);
+    expect(shouldToast({}, status(503), true)).toBe(true);
   });
 
   it("an answer with errors still toasts", () => {
@@ -87,6 +126,38 @@ describe("fetchOrNetworkError", () => {
       signal: controller.signal,
     }).catch((e: unknown) => e);
     expect(error).toBe(aborted);
+  });
+
+  it("gives up on a fetch that never answers", async () => {
+    let signal: AbortSignal | undefined;
+    globalThis.fetch = ((_: unknown, init?: RequestInit) =>
+      new Promise((_, reject) => {
+        signal = init?.signal ?? undefined;
+        signal?.addEventListener("abort", () =>
+          reject(new Error("The operation was aborted.")),
+        );
+      })) as unknown as typeof fetch;
+    const error = await fetchOrNetworkError(
+      "https://example.com",
+      undefined,
+      10,
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(NetworkError);
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("passes the caller's abort on to the fetch", async () => {
+    let signal: AbortSignal | undefined;
+    globalThis.fetch = ((_: unknown, init?: RequestInit) => {
+      signal = init?.signal ?? undefined;
+      return new Promise(() => {});
+    }) as unknown as typeof fetch;
+    const controller = new AbortController();
+    void fetchOrNetworkError("https://example.com", {
+      signal: controller.signal,
+    }).catch(() => {});
+    controller.abort();
+    expect(signal?.aborted).toBe(true);
   });
 
   it("passes an HTTP error response through", async () => {
