@@ -134,7 +134,7 @@ function ListBody({
       snapPoints={["half", "full"]}
       snapPointsDirection="bottom"
     >
-      <View className="flex-1 pb-4">
+      <View className="flex-1">
         <Sheet.Header className="p-4">
           <View className="flex-row items-center gap-2">
             <View>
@@ -267,6 +267,7 @@ function ListBody({
           </View>
 
           <LegendList
+            contentContainerClassName="pb-4"
             itemLayoutAnimation={LinearTransition}
             data={items}
             keyExtractor={sheetItemKey}

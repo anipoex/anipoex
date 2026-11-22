@@ -132,11 +132,7 @@ function ListBody({ manga, read, selectedId, onSelect }: ListBodyProps) {
   return (
     <>
       <Host className="flex-1">
-        <VStack
-          alignment="leading"
-          spacing={0}
-          modifiers={[padding({ bottom: GUTTER })]}
-        >
+        <VStack alignment="leading" spacing={0}>
           <VStack
             alignment="leading"
             spacing={16}

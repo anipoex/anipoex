@@ -290,17 +290,17 @@ function ListBody({ manga, read, selectedId, onSelect }: ListBodyProps) {
         </Column>
       </Host>
       <Host className="flex-1">
-        <Column
-          modifiers={[
-            fillMaxSize(),
-            nestedScrollInteropConnection(),
-            padding(insets.left, 0, insets.right, GUTTER),
-          ]}
-        >
+        <Column modifiers={[fillMaxSize(), nestedScrollInteropConnection()]}>
           {items.length === 0 ? (
             // A fixed height: centred in the full sheet, it sits below the
             // half snap.
-            <Box modifiers={[fillMaxWidth(), height(EMPTY_HEIGHT)]}>
+            <Box
+              modifiers={[
+                fillMaxWidth(),
+                height(EMPTY_HEIGHT),
+                padding(insets.left, 0, insets.right, 0),
+              ]}
+            >
               {/* Scrolls inside the box, so the description variant never
                 clips silently. */}
               <EmptyState {...empty} modifiers={[verticalScroll()]} />
@@ -309,6 +309,11 @@ function ListBody({ manga, read, selectedId, onSelect }: ListBodyProps) {
             // One lazy list; the group gives TalkBack the radios' collection.
             <LazyColumn
               modifiers={[fillMaxWidth(), weight(1), selectableGroup()]}
+              contentPadding={{
+                start: insets.left,
+                end: insets.right,
+                bottom: GUTTER,
+              }}
             >
               {/* Keyed by source: a scan reorders rows while a menu may be open. */}
               <LazyColumn.Items
