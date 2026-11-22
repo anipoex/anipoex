@@ -52,6 +52,15 @@ test("evictsOldest", () => {
 test("dropsNonWebUpstream", () => {
   const store = pageStore();
   expect(store.rewrite("7", [page(0, "file:///etc/passwd")])).toEqual([]);
+  expect(store.rewrite("7", [page(0, "javascript:alert(1)")])).toEqual([]);
+  // A bare path is kept: the source builds the address from the page's url.
+  const [kept] = store.rewrite("7", [
+    { ...page(0, "/data/a/1.png"), url: "https://s,t,1" },
+  ]);
+  expect(store.original(kept.imageUrl)).toMatchObject({
+    url: "https://s,t,1",
+    imageUrl: "/data/a/1.png",
+  });
 });
 
 const served = (store, image) => {

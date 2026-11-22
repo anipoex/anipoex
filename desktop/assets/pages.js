@@ -5,7 +5,12 @@ import { fileURLToPath } from "node:url";
 export const PAGE_SCHEME = "anipoex-page";
 const CHAPTER_KEY = /^[A-Za-z0-9-]{1,200}$/;
 
-const isWeb = (url) => ["http:", "https:"].includes(URL.parse(url)?.protocol);
+// A bare path is the source's own: its imageRequest adds the server, from the
+// page's url. Any other scheme (file:, javascript:) never reaches the sidecar.
+const isWeb = (url) => {
+  const parsed = URL.parse(url);
+  return parsed ? ["http:", "https:"].includes(parsed.protocol) : true;
+};
 
 // shortcut: in memory, reset on restart, so a reader open across a restart
 // reloads its chapter; persist if that bites.
