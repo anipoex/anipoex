@@ -81,6 +81,7 @@ function downloadFlags(mangaId: number, progress: number) {
   if (stored?.manga.url !== match.manga.url) return "unread missing";
   const { unread, missing } = pickFlags(
     stored.chapters,
+    stored.manga.title,
     progress,
     new Set(Object.keys(downloaded$[key].get() ?? {})),
   );

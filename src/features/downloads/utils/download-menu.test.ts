@@ -80,12 +80,13 @@ describe("downloadMenu", () => {
     expect(menu.items.slice(0, 5).map((i) => i.disabled)).toEqual(
       Array(5).fill(true),
     );
-    expect(menu.items[5].disabled).toBe(false);
+    expect(menu.items[5]).toMatchObject({ label: "Delete downloads" });
+    expect(menu.items[5].disabled).toBeFalsy();
   });
 
-  test("with no downloads, delete is disabled", () => {
+  test("with no downloads, delete is left out", () => {
     const { row } = build();
-    expect(row("Delete downloads")?.disabled).toBe(true);
+    expect(row("Delete downloads")).toBeUndefined();
     expect(row("Next 5")?.disabled).toBe(false);
   });
 
@@ -172,10 +173,9 @@ describe("downloadMenu", () => {
         queued,
       }).menu.items.map((i) => i.label);
     expect(labels(false)).not.toContain("Cancel all downloads");
-    expect(labels(true).slice(-3)).toEqual([
+    expect(labels(true).slice(-2)).toEqual([
       "Cancel this manga's downloads",
       "Cancel all downloads",
-      "Delete downloads",
     ]);
   });
 });
@@ -211,7 +211,7 @@ describe("deferredDownloadMenu", () => {
         () => {},
       ).items.map((i) => !!i.disabled);
     expect(states({ unread: false, missing: true, downloaded: false })).toEqual(
-      [true, true, true, true, false, true],
+      [true, true, true, true, false],
     );
     expect(states({ unread: true, missing: true, downloaded: true })).toEqual([
       false,

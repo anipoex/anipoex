@@ -96,7 +96,6 @@ export function downloadMenu({
     label: REMOVE_LABEL,
     icon: Icons.trash,
     destructive: true,
-    disabled: downloadedHashes.size === 0,
     onPressMode: "dialog",
     dialogConfig: {
       title: "Delete downloads?",
@@ -121,7 +120,8 @@ export function downloadMenu({
     menu: {
       label: "Download",
       icon: Icons.download,
-      items: [...items, ...cancel, remove],
+      // Left out, not disabled: Android shows the menu as one long list.
+      items: [...items, ...cancel, ...(downloadedHashes.size ? [remove] : [])],
     },
     remove,
   };
@@ -173,13 +173,16 @@ export function deferredDownloadMenu(
         disabled: !(pick === "all" ? missing : unread),
         onPress: press(label),
       })),
-      {
-        label: REMOVE_LABEL,
-        icon: Icons.trash,
-        destructive: true,
-        disabled: !downloaded,
-        onPress: press(REMOVE_LABEL),
-      },
+      ...(downloaded
+        ? [
+            {
+              label: REMOVE_LABEL,
+              icon: Icons.trash,
+              destructive: true,
+              onPress: press(REMOVE_LABEL),
+            },
+          ]
+        : []),
     ],
   };
 }

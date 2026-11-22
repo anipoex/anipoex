@@ -1,4 +1,9 @@
-import { type Chapter, isRead } from "@/features/manga/utils/to-chapters";
+import {
+  type Chapter,
+  isRead,
+  parseChapterNumbers,
+  toDouble,
+} from "@/features/manga/utils/to-chapters";
 import { chapterHash } from "./paths";
 
 // The menu rebuilds on each finished or deleted download and hashed every
@@ -82,14 +87,29 @@ export function preferredScanlator(
 /**
  * Whether any pick past `progress` has a chapter left (`unread`) and whether
  * All has (`missing`), from a source's stored list as it came: only unread
- * chapters are hashed, so a grid card can afford it. Numbers are the source's
- * own, as the card's +N reads them.
+ * chapters are hashed, so a grid card can afford it. Numbers are read as the
+ * detail reads them: a source that gives none (-1) leaves them in the names.
  */
-type StoredChapter = { url: string; number: number };
+type StoredChapter = { url: string; number: number; name: string };
 
 // A card re-reads these on every render: a stored list is replaced, never
 // edited, so its group count and each chapter's hash are worked out once.
 const groupCounts = new WeakMap<StoredChapter[], number>();
+const numberings = new WeakMap<StoredChapter[], number[]>();
+
+const numbersOf = (chapters: StoredChapter[], mangaTitle: string) => {
+  let numbers = numberings.get(chapters);
+  if (numbers === undefined) {
+    // Parsing costs ~5 ms for 269 names on a phone: only lists that need it.
+    numbers = chapters.every((c) => c.number >= 0)
+      ? chapters.map((c) => c.number)
+      : parseChapterNumbers(mangaTitle, chapters).map((n) =>
+          toDouble(n.chapter ?? "-1"),
+        );
+    numberings.set(chapters, numbers);
+  }
+  return numbers;
+};
 const storedHashes = new WeakMap<StoredChapter, string>();
 
 const storedHashOf = (chapter: StoredChapter) => {
@@ -103,18 +123,22 @@ const storedHashOf = (chapter: StoredChapter) => {
 
 export function pickFlags(
   chapters: StoredChapter[],
+  mangaTitle: string,
   progress: number,
   downloadedHashes: Set<string>,
 ) {
+  const numbers = numbersOf(chapters, mangaTitle);
   const covered = new Map<number, boolean>();
-  for (const c of chapters) {
-    if (!(c.number > progress) || covered.get(c.number)) continue;
-    covered.set(c.number, downloadedHashes.has(storedHashOf(c)));
-  }
+  chapters.forEach((c, i) => {
+    const number = numbers[i];
+    if (!(number > progress) || covered.get(number)) return;
+    covered.set(number, downloadedHashes.has(storedHashOf(c)));
+  });
   let groups = groupCounts.get(chapters);
   if (groups === undefined) {
-    groups = new Set(chapters.map((c) => (c.number < 0 ? c.url : c.number)))
-      .size;
+    groups = new Set(
+      chapters.map((c, i) => (numbers[i] < 0 ? c.url : numbers[i])),
+    ).size;
     groupCounts.set(chapters, groups);
   }
   return {

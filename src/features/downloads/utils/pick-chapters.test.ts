@@ -135,19 +135,36 @@ describe("pickFlags", () => {
   const list = [3, 2, 2, 1].map((number, i) => ({
     url: `/c/${number}-${i}`,
     number,
+    name: `Chapter ${number}`,
   }));
   const hashes = (...urls: string[]) => new Set(urls.map(chapterHash));
 
   test("unread while a chapter past progress has no download", () => {
-    expect(pickFlags(list, 1, hashes()).unread).toBe(true);
+    expect(pickFlags(list, "Manga", 1, hashes()).unread).toBe(true);
     // Either copy of chapter 2 covers it.
-    expect(pickFlags(list, 1, hashes("/c/3-0", "/c/2-2")).unread).toBe(false);
+    expect(pickFlags(list, "Manga", 1, hashes("/c/3-0", "/c/2-2")).unread).toBe(
+      false,
+    );
+  });
+
+  test("a source without numbers is read from the names, as the detail reads it", () => {
+    const named = [3, 2, 1].map((n) => ({
+      url: `/n/${n}`,
+      number: -1,
+      name: `Capitulo ${n}`,
+    }));
+    expect(pickFlags(named, "Manga", 1, hashes()).unread).toBe(true);
+    expect(pickFlags(named, "Manga", 1, hashes("/n/3", "/n/2")).unread).toBe(
+      false,
+    );
   });
 
   test("missing until every number has a download", () => {
-    expect(pickFlags(list, 3, hashes("/c/3-0", "/c/2-1")).missing).toBe(true);
     expect(
-      pickFlags(list, 3, hashes("/c/3-0", "/c/2-1", "/c/1-3")).missing,
+      pickFlags(list, "Manga", 3, hashes("/c/3-0", "/c/2-1")).missing,
+    ).toBe(true);
+    expect(
+      pickFlags(list, "Manga", 3, hashes("/c/3-0", "/c/2-1", "/c/1-3")).missing,
     ).toBe(false);
   });
 });
