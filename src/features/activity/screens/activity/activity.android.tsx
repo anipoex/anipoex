@@ -15,12 +15,13 @@ import {
 import { useValue } from "@legendapp/state/react";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ActiveFilters } from "@/components/blocks/active-filters";
 import { EmptyState } from "@/components/blocks/empty-state";
 import { GUTTER } from "@/components/native/constants";
 import { pinnedScrollBehavior } from "@/components/native/jetpack-compose/pinned-scroll-behavior";
 import { Text } from "@/components/native/jetpack-compose/text";
+import { Dialog } from "@/components/ui/dialog";
 import { Host } from "@/components/ui/host";
 import { useActivityIds } from "@/features/activity/hooks/use-activity-ids";
 import {
@@ -191,6 +192,7 @@ function DownloadsLabel({ title }: { title: string }) {
 
 function Label({ title, actions }: { title: string; actions: HeaderAction[] }) {
   const m3 = useThemeM3Colors();
+  const [confirming, setConfirming] = useState<HeaderAction | null>(null);
 
   return (
     <Row
@@ -201,11 +203,25 @@ function Label({ title, actions }: { title: string; actions: HeaderAction[] }) {
         {title}
       </Text>
       <Spacer modifiers={[weight(1)]} />
-      {actions.map(({ label, onPress }) => (
-        <TextButton key={label} onClick={onPress}>
-          <Text style={{ typography: "labelLarge" }}>{label}</Text>
+      {actions.map((action) => (
+        <TextButton
+          key={action.label}
+          onClick={
+            action.confirm ? () => setConfirming(action) : action.onPress
+          }
+        >
+          <Text style={{ typography: "labelLarge" }}>{action.label}</Text>
         </TextButton>
       ))}
+      {confirming?.confirm && (
+        <Dialog
+          {...confirming.confirm}
+          open
+          onOpenChange={(open) => !open && setConfirming(null)}
+          role="destructive"
+          onConfirm={confirming.onPress}
+        />
+      )}
     </Row>
   );
 }

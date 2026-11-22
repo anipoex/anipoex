@@ -1,4 +1,4 @@
-import { downloadQueue$ } from "@/features/downloads";
+import { downloadQueue$, type QueuedDownload } from "@/features/downloads";
 import { activeScans$ } from "@/features/manga/state/active-scans";
 import {
   readingQueue$,
@@ -9,9 +9,16 @@ import {
 export const downloads = () =>
   Object.values(downloadQueue$.get()).sort((a, b) => a.order - b.order);
 
-/** Every download's key in order, joined. */
-export const downloadIds = () =>
+/** `mangaId/sourceId`: one manga's downloads from one source. */
+const groupOf = (d: QueuedDownload) => `${d.manga.id}/${d.source.id}`;
+
+/** Each download group, in the order of its first chapter, joined. */
+export const downloadIds = () => [...new Set(downloads().map(groupOf))].join();
+
+/** A group's download keys in queue order, joined. */
+export const groupDownloadIds = (group: string) =>
   downloads()
+    .filter((d) => groupOf(d) === group)
     .map((d) => d.key)
     .join();
 

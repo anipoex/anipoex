@@ -33,6 +33,7 @@ import { useChapterPage } from "./hooks/use-chapter-page";
 import { useChapterRead } from "./hooks/use-chapter-read";
 import { useIsNext } from "./hooks/use-is-next";
 import {
+  chapterItems,
   DELETE_DIALOG,
   downloadItems,
   STATE_ICONS,
@@ -54,13 +55,9 @@ export const ChapterItem = memo(function ChapterItem({
   const { state, key, actions } = useChapterDownload(manga, source, chapter);
   // Delete confirms in the row's alert, which the swipe opens too.
   const [deleting, setDeleting] = useState(false);
-  const items = source
-    ? downloadItems(
-        state,
-        { ...actions, remove: () => setDeleting(true) },
-        false,
-      )
-    : [];
+  const rowActions = { ...actions, remove: () => setDeleting(true) };
+  const items = source ? downloadItems(state, rowActions, false) : [];
+  const swipes = source ? chapterItems(state, rowActions, false) : [];
 
   const row = (
     <Button
@@ -139,12 +136,12 @@ export const ChapterItem = memo(function ChapterItem({
   return (
     <SwipeActions>
       {items.length > 0 ? <ContextMenu items={items}>{row}</ContextMenu> : row}
-      {items.length > 0 && (
+      {swipes.length > 0 && (
         <SwipeActions.Actions edge="trailing" allowsFullSwipe={false}>
           {/* The menu's rows by their verb alone: the row says what they act
               on. No destructive role: SwiftUI would delete the row before the
               alert confirms. */}
-          {items.map((item) => (
+          {swipes.map((item) => (
             <Button
               key={item.label}
               label={item.label.split(" ")[0]}

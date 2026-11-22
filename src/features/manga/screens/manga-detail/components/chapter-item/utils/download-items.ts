@@ -1,6 +1,11 @@
 import { Icons } from "@/components/ui/icon";
-import type { MenuAction, MenuItemDialogConfig } from "@/components/ui/menu";
+import type {
+  MenuAction,
+  MenuItem,
+  MenuItemDialogConfig,
+} from "@/components/ui/menu";
 import type { DownloadState } from "@/features/downloads";
+import { cancelQueueItems } from "@/features/downloads/utils/cancel-items";
 
 export const DELETE_DIALOG: MenuItemDialogConfig = {
   title: "Delete download",
@@ -10,7 +15,7 @@ export const DELETE_DIALOG: MenuItemDialogConfig = {
 
 const LABELS: Record<DownloadState, string> = {
   none: "Download chapter",
-  queued: "Cancel download of chapter",
+  queued: "Download queued: chapter",
   running: "Downloading chapter",
   paused: "Resume download of chapter",
   failed: "Retry download of chapter",
@@ -38,6 +43,9 @@ export interface DownloadActions {
   pause: () => void;
   resume: () => void;
   remove: () => void;
+  /** This manga's chapters from this source. */
+  cancelGroup: () => void;
+  cancelAll: () => void;
 }
 
 /** `confirm: false` leaves the dialog to the caller (an iOS swipe opens it too). */
@@ -53,8 +61,8 @@ export function deleteItem(onPress: () => void, confirm = true): MenuAction {
     : row;
 }
 
-/** The long-press menu's rows for a chapter in this state. */
-export function downloadItems(
+/** The chapter's own rows in this state: an iOS swipe shows these. */
+export function chapterItems(
   state: DownloadState,
   actions: DownloadActions,
   confirm = true,
@@ -93,4 +101,21 @@ export function downloadItems(
     default:
       return [deleteItem(actions.remove, confirm)];
   }
+}
+
+/**
+ * The long-press menu: the chapter's rows and, while it's in the queue, a
+ * group to cancel its manga's chapters or the whole queue.
+ */
+export function downloadItems(
+  state: DownloadState,
+  actions: DownloadActions,
+  confirm = true,
+): MenuItem[] {
+  const own = chapterItems(state, actions, confirm);
+  if (state === "none" || state === "local" || state === "cloud") return own;
+  return [
+    ...own,
+    { items: cancelQueueItems(actions.cancelGroup, actions.cancelAll) },
+  ];
 }

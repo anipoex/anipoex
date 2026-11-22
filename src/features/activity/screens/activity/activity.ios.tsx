@@ -11,6 +11,7 @@ import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { memo, useMemo } from "react";
 import { EmptyState } from "@/components/blocks/empty-state";
 import { Text, useFont } from "@/components/native/swift-ui/text";
+import { Dialog } from "@/components/ui/dialog";
 import { Host } from "@/components/ui/host";
 import { useActivityIds } from "@/features/activity/hooks/use-activity-ids";
 import {
@@ -178,14 +179,32 @@ function SectionHeader({
     <HStack>
       <Text>{title}</Text>
       <Spacer />
-      {actions.map(({ label, onPress }) => (
-        <Button
-          key={label}
-          label={label}
-          onPress={onPress}
-          modifiers={[buttonStyle("borderless"), controlSize("small"), font]}
-        />
-      ))}
+      {actions.map(({ label, onPress, confirm }) => {
+        const modifiers = [
+          buttonStyle("borderless"),
+          controlSize("small"),
+          font,
+        ];
+        return confirm ? (
+          <Dialog
+            key={label}
+            {...confirm}
+            role="destructive"
+            onConfirm={onPress}
+          >
+            <Dialog.Trigger>
+              <Button label={label} modifiers={modifiers} />
+            </Dialog.Trigger>
+          </Dialog>
+        ) : (
+          <Button
+            key={label}
+            label={label}
+            onPress={onPress}
+            modifiers={modifiers}
+          />
+        );
+      })}
     </HStack>
   );
 }

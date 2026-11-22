@@ -5,7 +5,7 @@ import { useBreakpoint } from "panelui-native/hooks/use-breakpoint";
 import { cn } from "panelui-native/utils/cn";
 import { Button } from "panelui-web/button";
 import { Frame } from "panelui-web/frame";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { View } from "react-native";
 import { LinearTransition } from "react-native-reanimated";
 import { ActiveFilters } from "@/components/blocks/active-filters";
@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/blocks/empty-state";
 import { FilterSidebar } from "@/components/blocks/filter-sidebar";
 import { HeaderInsetView } from "@/components/layout/header-inset-view";
 import { LegendList } from "@/components/layout/legend-list";
+import { Dialog } from "@/components/ui/dialog";
 import { useActivityIds } from "@/features/activity/hooks/use-activity-ids";
 import {
   type ActivityFilter,
@@ -180,6 +181,7 @@ function SectionHeader({
   actions?: HeaderAction[];
 }) {
   const description = SECTION_DESCRIPTIONS[section];
+  const [confirming, setConfirming] = useState<HeaderAction | null>(null);
 
   return (
     <Frame
@@ -193,11 +195,27 @@ function SectionHeader({
         {description && <Frame.Description>{description}</Frame.Description>}
         {actions.length > 0 && (
           <Frame.Action className="flex flex-row items-center gap-1">
-            {actions.map(({ label, onPress }) => (
-              <Button key={label} variant="ghost" size="sm" onClick={onPress}>
-                {label}
+            {actions.map((action) => (
+              <Button
+                key={action.label}
+                variant="ghost"
+                size="sm"
+                onClick={
+                  action.confirm ? () => setConfirming(action) : action.onPress
+                }
+              >
+                {action.label}
               </Button>
             ))}
+            {confirming?.confirm && (
+              <Dialog
+                {...confirming.confirm}
+                open
+                onOpenChange={(open) => !open && setConfirming(null)}
+                role="destructive"
+                onConfirm={confirming.onPress}
+              />
+            )}
           </Frame.Action>
         )}
       </Frame.Header>

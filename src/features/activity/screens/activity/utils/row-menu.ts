@@ -1,8 +1,11 @@
 import { Icons } from "@/components/ui/icon";
 import type { MenuItem } from "@/components/ui/menu";
 import type { QueuedDownload } from "@/features/downloads";
+import { cancelQueueItems } from "@/features/downloads/utils/cancel-items";
 import {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   moveDownloadUp,
   pauseDownload,
   removeFromQueue,
@@ -56,6 +59,27 @@ export function sourceMenu(mangaId: number, sourceId: string): MenuItem[] {
       icon: Icons.stop,
       destructive: true,
       onPress: () => stopSource(mangaId, sourceId),
+    },
+  ];
+}
+
+/** A download group's menu: one manga's chapters from one source. */
+export function downloadGroupMenu(
+  group: { mangaId: number; sourceId: string; id: string },
+  { expanded, open }: { expanded: boolean; open: () => void },
+): MenuItem[] {
+  return [
+    { label: "Open manga", icon: Icons.openExternal, onPress: open },
+    {
+      label: expanded ? "Hide chapters" : "Show chapters",
+      icon: Icons.list,
+      onPress: () => toggleExpanded(group.id),
+    },
+    {
+      items: cancelQueueItems(
+        () => cancelGroupDownloads(group.mangaId, group.sourceId),
+        cancelAllDownloads,
+      ),
     },
   ];
 }

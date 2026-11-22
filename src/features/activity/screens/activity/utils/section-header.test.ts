@@ -1,5 +1,9 @@
 import { expect, mock, test } from "bun:test";
 
+// The registry requires native assets; the menu only needs a name per icon.
+mock.module("@/components/ui/icon", () => ({
+  Icons: new Proxy({}, { get: (_, name) => String(name) }),
+}));
 mock.module("@/state/observable-persist", () => ({
   ObservablePersist: class {
     getTable() {
@@ -34,6 +38,7 @@ test("each header keeps today's actions", () => {
   expect(headerActions("downloads").map((a) => a.label)).toEqual([
     "Retry all",
     "Pause",
+    "Cancel all",
   ]);
   expect(headerActions("skipped")[0].onPress).toBe(scan.retryAllSkipped);
   expect(headerActions("entries")).toEqual([]);

@@ -6,7 +6,9 @@ mock.module("@/components/ui/icon", () => ({
   Icons: new Proxy({}, { get: (_, name) => String(name) }),
 }));
 mock.module("./actions", () => ({
+  cancelAllDownloads() {},
   cancelDownload() {},
+  cancelGroupDownloads() {},
   moveDownloadUp() {},
   pauseDownload() {},
   removeFromQueue() {},
@@ -17,8 +19,14 @@ mock.module("./actions", () => ({
   stopManga() {},
   stopSource() {},
 }));
-const { downloadRowMenu, queuedMenu, runningMenu, skippedMenu, sourceMenu } =
-  await import("./row-menu");
+const {
+  downloadGroupMenu,
+  downloadRowMenu,
+  queuedMenu,
+  runningMenu,
+  skippedMenu,
+  sourceMenu,
+} = await import("./row-menu");
 
 const labels = (items: MenuItem[]) =>
   items.map((i) => ("label" in i ? i.label : ""));
@@ -37,6 +45,20 @@ describe("row menus", () => {
     expect(destructive(items)).toEqual(["Stop this manga"]);
     expect(labels(runningMenu(1, { expanded: true, open }))[1]).toBe(
       "Hide sources",
+    );
+  });
+
+  test("a download group's", () => {
+    const group = { mangaId: 1, sourceId: "source-1", id: "1/source-1" };
+    const items = downloadGroupMenu(group, { expanded: false, open });
+    expect(labels(items)).toEqual(["Open manga", "Show chapters", ""]);
+    const cancel = items[2];
+    expect("items" in cancel && labels(cancel.items)).toEqual([
+      "Cancel this manga's downloads",
+      "Cancel all downloads",
+    ]);
+    expect(labels(downloadGroupMenu(group, { expanded: true, open }))[1]).toBe(
+      "Hide chapters",
     );
   });
 

@@ -28,7 +28,9 @@ const {
   enqueue,
 } = await import("./download-queue");
 const {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   downloadDeps,
   pauseDownload,
   pauseDownloads,
@@ -166,6 +168,27 @@ describe("startDownloads", () => {
     startDownloads();
     await flush();
     expect(pages.fn).not.toHaveBeenCalled();
+  });
+});
+
+describe("cancelAllDownloads", () => {
+  it("stops the running chapter and starts nothing after it", async () => {
+    enqueue([item("a"), item("b"), item("c", "5678")]);
+    startDownloads();
+    await flush();
+    cancelAllDownloads();
+    await flush();
+    expect(downloadQueue$.get()).toEqual({});
+    expect(downloadStops.size).toBe(0);
+    expect(urlsAsked()).toEqual(["a", "c"]);
+  });
+});
+
+describe("cancelGroupDownloads", () => {
+  it("cancels one manga's chapters from one source", async () => {
+    enqueue([item("a"), item("b"), item("c", "5678")]);
+    cancelGroupDownloads(21, "1234");
+    expect(Object.keys(downloadQueue$.get())).toEqual([keyOf("c", "5678")]);
   });
 });
 

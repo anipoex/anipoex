@@ -1,14 +1,8 @@
 import { Box, Column, IconButton } from "@expo/ui/jetpack-compose";
-import {
-  clip,
-  padding,
-  Shapes,
-  size,
-} from "@expo/ui/jetpack-compose/modifiers";
+import { padding } from "@expo/ui/jetpack-compose/modifiers";
 import { Computed } from "@legendapp/state/react";
 import { memo } from "react";
 import { GUTTER } from "@/components/native/constants";
-import { Image } from "@/components/native/jetpack-compose/image";
 import {
   SEGMENTED_GAP,
   SegmentedListItem,
@@ -34,8 +28,7 @@ export const DownloadItem = memo(function DownloadItem({
   index = 0,
   count = 1,
 }: DownloadItemProps) {
-  const { title, label, cover, chapter, state, line, canMoveUp } =
-    useDownloadItem(id);
+  const { label, chapter, state, line, canMoveUp } = useDownloadItem(id);
   const m3 = useThemeM3Colors();
   const failed = state === "failed";
   // One button: the state's own action, else Cancel (also in the menu).
@@ -61,27 +54,15 @@ export const DownloadItem = memo(function DownloadItem({
             };
 
   return (
-    <Box
-      modifiers={[padding(GUTTER, index > 0 ? SEGMENTED_GAP : 0, GUTTER, 0)]}
-    >
+    <Box modifiers={[padding(GUTTER + 16, SEGMENTED_GAP, GUTTER, 0)]}>
       <ContextMenu items={downloadRowMenu(id, { state, canMoveUp })}>
         <SegmentedListItem
           index={index}
           count={count}
-          colors={{ containerColor: m3.surfaceContainerHigh }}
+          colors={{ containerColor: m3.surfaceContainer }}
         >
-          <SegmentedListItem.Leading>
-            {cover ? (
-              <Image
-                source={{ uri: cover }}
-                modifiers={[size(28, 40), clip(Shapes.RoundedCorner(6))]}
-              />
-            ) : (
-              <Box modifiers={[size(28, 40)]} />
-            )}
-          </SegmentedListItem.Leading>
           <Text maxLines={1} overflow="ellipsis">
-            {title}
+            {chapter}
           </Text>
           <SegmentedListItem.Supporting>
             {state === "running" ? (
@@ -91,7 +72,7 @@ export const DownloadItem = memo(function DownloadItem({
                   return (
                     <Column verticalArrangement={{ spacedBy: 4 }}>
                       <Text style={{ typography: "bodyMedium" }}>
-                        {`${chapter} · ${Math.round(value * 100)}%`}
+                        {`${Math.round(value * 100)}%`}
                       </Text>
                       <Progress value={value} maxValue={1} size="sm" />
                     </Column>

@@ -16,12 +16,13 @@ mock.module("@/state/observable-persist", () => ({
 }));
 
 const {
-  cancel,
+  cancelMany,
   downloadProgress$,
   downloadQueue$,
   downloadStops,
   downloaded$,
   enqueue,
+  groupKeys,
   moveUp,
   queuedOf,
   retry,
@@ -77,18 +78,43 @@ describe("enqueue", () => {
   });
 });
 
-describe("cancel", () => {
+describe("cancelMany", () => {
   it("removes the entry and calls its stop once", () => {
     enqueue([item("a")]);
     const key = keyOf("a");
     downloadProgress$[key].set(0.5);
     const stop = mock(() => {});
     downloadStops.set(key, stop);
-    cancel(key);
+    cancelMany([key]);
     expect(stop).toHaveBeenCalledTimes(1);
     expect(downloadStops.has(key)).toBe(false);
     expect(downloadQueue$.get()[key]).toBeUndefined();
     expect(downloadProgress$.get()[key]).toBeUndefined();
+  });
+});
+
+describe("cancelMany", () => {
+  it("removes each entry, stops the running one and leaves the rest", () => {
+    enqueue([item("a"), item("b"), item("c")]);
+    const stop = mock(() => {});
+    downloadStops.set(keyOf("a"), stop);
+    downloadProgress$[keyOf("a")].set(0.5);
+    cancelMany([keyOf("a"), keyOf("b")]);
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(downloadStops.size).toBe(0);
+    expect(Object.keys(downloadQueue$.get())).toEqual([keyOf("c")]);
+    expect(downloadProgress$.get()).toEqual({});
+  });
+});
+
+describe("groupKeys", () => {
+  it("lists one manga's entries from one source, in queue order", () => {
+    enqueue([item("a"), item("b", "5678"), item("c")]);
+    moveUp(keyOf("c"));
+    moveUp(keyOf("c"));
+    expect(groupKeys(21, "1234")).toEqual([keyOf("c"), keyOf("a")]);
+    expect(groupKeys(21, "5678")).toEqual([keyOf("b", "5678")]);
+    expect(groupKeys(22, "1234")).toEqual([]);
   });
 });
 

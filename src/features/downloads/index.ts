@@ -12,7 +12,9 @@ export {
 } from "./state/download-queue";
 export { loadDownloaded, refreshDownloaded } from "./state/downloaded";
 export {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   pauseDownload,
   pauseDownloads,
   resumeDownload,
@@ -31,6 +33,7 @@ export { type DownloadRoot, downloadRoot } from "./utils/download-root";
 export {
   type DownloadState,
   downloadStateOf,
+  inQueue,
   mangaDownloads,
   sourceDownloads,
 } from "./utils/download-state";

@@ -2,7 +2,12 @@ import { Icons } from "@/components/ui/icon";
 import type { MenuAction, MenuSubmenu } from "@/components/ui/menu";
 import type { Chapter } from "@/features/manga/utils/to-chapters";
 import { enqueue as enqueueDownloads } from "../state/download-queue";
-import { startDownloads } from "../state/run-downloads";
+import {
+  cancelAllDownloads,
+  cancelGroupDownloads,
+  startDownloads,
+} from "../state/run-downloads";
+import { cancelQueueItems } from "./cancel-items";
 import { chapterToQueued, deleteDownloads } from "./download-actions";
 import {
   type DownloadPick,
@@ -30,6 +35,8 @@ export interface DownloadMenuArgs {
   chapters: Chapter[];
   progress: number;
   downloadedHashes: Set<string>;
+  /** Whether a chapter of this manga from this source is in the queue. */
+  queued?: boolean;
   notify?: (message: string) => void;
   enqueue?: typeof enqueueDownloads;
   start?: () => void;
@@ -42,6 +49,7 @@ export function downloadMenu({
   chapters,
   progress,
   downloadedHashes,
+  queued = false,
   notify,
   enqueue = enqueueDownloads,
   start = startDownloads,
@@ -102,7 +110,17 @@ export function downloadMenu({
     },
   };
 
-  return { menu: { label: "Download", items: [...items, remove] }, remove };
+  const cancel = queued
+    ? cancelQueueItems(
+        () => cancelGroupDownloads(manga.id, source.id),
+        cancelAllDownloads,
+      )
+    : [];
+
+  return {
+    menu: { label: "Download", items: [...items, ...cancel, remove] },
+    remove,
+  };
 }
 
 /**

@@ -1,3 +1,4 @@
+import type { QueuedDownload } from "@/features/downloads";
 import type { ActiveMark } from "@/features/manga/state/active-scans";
 
 export const isBusy = (m: ActiveMark) =>
@@ -10,6 +11,19 @@ export function scanProgress(marks: ActiveMark[]) {
   return {
     value: marks.length ? done / marks.length : 0,
     line: `${done}/${marks.length} sources${found ? ` · ${found} found` : ""}`,
+  };
+}
+
+/** A download group's share done, the mean of its chapters', and its line. */
+export function groupProgress(
+  source: string,
+  chapters: { state: QueuedDownload["state"]; fraction: number }[],
+) {
+  const n = chapters.length;
+  const failed = chapters.filter((c) => c.state === "failed").length;
+  return {
+    value: n ? chapters.reduce((sum, c) => sum + c.fraction, 0) / n : 0,
+    line: `${source} · ${n} chapter${n === 1 ? "" : "s"}${failed ? ` · ${failed} failed` : ""}`,
   };
 }
 

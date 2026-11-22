@@ -36,3 +36,9 @@ export function mangaDownloads(mangaId: number) {
     if (key.startsWith(prefix)) count += Object.keys(files).length;
   return count;
 }
+
+/** Whether a chapter of this manga from this source is in the queue, tracked like `downloadStateOf`. */
+export const inQueue = (mangaId: number, sourceId: string) =>
+  Object.values(downloadQueue$.get()).some(
+    (e) => e.manga.id === mangaId && e.source.id === sourceId,
+  );

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ActiveMark } from "@/features/manga/state/active-scans";
-import { scanProgress, sourceStatus } from "./progress";
+import { groupProgress, scanProgress, sourceStatus } from "./progress";
 
 const mark = (state: ActiveMark["state"], unread?: number) =>
   ({
@@ -10,6 +10,23 @@ const mark = (state: ActiveMark["state"], unread?: number) =>
     state,
     unread,
   }) as ActiveMark;
+
+describe("groupProgress", () => {
+  test("averages its chapters and counts the failed ones", () => {
+    expect(
+      groupProgress("Source A", [
+        { state: "running", fraction: 0.5 },
+        { state: "queued", fraction: 0 },
+        { state: "failed", fraction: 0 },
+        { state: "paused", fraction: 0.3 },
+      ]),
+    ).toEqual({ value: 0.2, line: "Source A · 4 chapters · 1 failed" });
+    expect(
+      groupProgress("Source A", [{ state: "queued", fraction: 0 }]).line,
+    ).toBe("Source A · 1 chapter");
+    expect(groupProgress("Source A", []).value).toBe(0);
+  });
+});
 
 describe("scanProgress", () => {
   test("counts the sources done and found", () => {

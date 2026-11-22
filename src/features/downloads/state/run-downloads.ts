@@ -8,7 +8,7 @@ import {
 } from "../utils/download-chapter";
 import { chapterHash, stageId } from "../utils/paths";
 import {
-  cancel,
+  cancelMany,
   downloaded$,
   downloadProgress$,
   downloadQueue$,
@@ -16,6 +16,7 @@ import {
   downloadsOffline$,
   downloadsPaused$,
   downloadsSuspended$,
+  groupKeys,
   queuedOf,
 } from "./download-queue";
 
@@ -175,15 +176,26 @@ export function resumeDownload(key: string) {
   startDownloads();
 }
 
-/** Removes a chapter from the queue; a stopped one also drops its staged pages. */
-export function cancelDownload(key: string) {
-  const stopped =
-    downloadQueue$[key].state.peek() === "paused" || staged.has(key);
-  cancel(key);
-  if (!stopped) return;
-  staged.delete(key);
-  void downloadDeps.runtime.dropStage(stageId(key)).catch(() => {});
+/** Removes chapters from the queue; a stopped one also drops its staged pages. */
+export function cancelDownloads(keys: string[]) {
+  const stopped = keys.filter(
+    (key) => downloadQueue$[key].state.peek() === "paused" || staged.has(key),
+  );
+  cancelMany(keys);
+  for (const key of stopped) {
+    staged.delete(key);
+    void downloadDeps.runtime.dropStage(stageId(key)).catch(() => {});
+  }
 }
+
+export const cancelDownload = (key: string) => cancelDownloads([key]);
+
+/** One manga's chapters from one source. */
+export const cancelGroupDownloads = (mangaId: number, sourceId: string) =>
+  cancelDownloads(groupKeys(mangaId, sourceId));
+
+export const cancelAllDownloads = () =>
+  cancelDownloads(Object.keys(downloadQueue$.peek()));
 
 /**
  * At app start: a chapter left running by a killed app starts over, and every

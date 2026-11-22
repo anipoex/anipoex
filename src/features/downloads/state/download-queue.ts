@@ -83,14 +83,25 @@ export function enqueue(
   return added;
 }
 
-export function cancel(key: string) {
-  downloadStops.get(key)?.();
-  downloadStops.delete(key);
+/** Removes these entries in one batch; a running one stops. */
+export function cancelMany(keys: string[]) {
+  for (const key of keys) {
+    downloadStops.get(key)?.();
+    downloadStops.delete(key);
+  }
   batch(() => {
-    downloadQueue$[key].delete();
-    downloadProgress$[key].delete();
+    for (const key of keys) {
+      downloadQueue$[key].delete();
+      downloadProgress$[key].delete();
+    }
   });
 }
+
+/** One manga's entries from one source, in queue order. */
+export const groupKeys = (mangaId: number, sourceId: string) =>
+  sorted()
+    .filter((e) => e.manga.id === mangaId && e.source.id === sourceId)
+    .map((e) => e.key);
 
 export function moveUp(key: string) {
   const entries = sorted().filter((e) => e.state === "queued");

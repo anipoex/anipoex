@@ -1,6 +1,6 @@
 import { useValue } from "@legendapp/state/react";
 import { toast } from "@/components/ui/toast";
-import { downloaded$ } from "@/features/downloads";
+import { downloaded$, inQueue } from "@/features/downloads";
 import { downloadMenu } from "@/features/downloads/utils/download-menu";
 import { isRuntimeAvailable } from "@/features/extensions";
 import { useTrackingEntry } from "@/features/manga/hooks/use-tracking-entry";
@@ -28,6 +28,9 @@ export function useDownloadMenu(
           .join(",")
       : "",
   );
+  const queued = useValue(() =>
+    match ? inQueue(manga.id, match.sourceId) : false,
+  );
 
   if (!match?.manga || !isRuntimeAvailable) return undefined;
 
@@ -42,6 +45,7 @@ export function useDownloadMenu(
     chapters,
     progress,
     downloadedHashes: new Set(hashes ? hashes.split(",") : []),
+    queued,
     notify: toast,
   });
 }

@@ -10,18 +10,10 @@ describe("chapterLabel", () => {
 });
 
 describe("downloadLine", () => {
-  test("shows the chapter and the state", () => {
-    expect(downloadLine("Chapter 1", "queued", undefined, false)).toBe(
-      "Chapter 1 · Queued",
-    );
-    expect(downloadLine("Chapter 1", "queued", undefined, true)).toBe(
-      "Chapter 1 · Paused",
-    );
-    expect(downloadLine("Chapter 1", "failed", "Timed out", true)).toBe(
-      "Chapter 1 · Timed out",
-    );
-    expect(downloadLine("Chapter 1", "failed", "", false)).toBe(
-      "Chapter 1 · Failed",
-    );
+  test("shows the state, or why it failed", () => {
+    expect(downloadLine("queued", undefined, false)).toBe("Queued");
+    expect(downloadLine("queued", undefined, true)).toBe("Paused");
+    expect(downloadLine("failed", "Timed out", true)).toBe("Timed out");
+    expect(downloadLine("failed", "", false)).toBe("Failed");
   });
 });

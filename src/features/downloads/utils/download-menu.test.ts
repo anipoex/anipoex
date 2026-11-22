@@ -160,6 +160,24 @@ describe("downloadMenu", () => {
     all?.onPress();
     expect(enqueued[0]).toHaveLength(CONFIRM_ALL_ABOVE + 1);
   });
+
+  test("offers the cancel rows only while this manga has chapters queued", () => {
+    const labels = (queued: boolean) =>
+      downloadMenu({
+        manga,
+        source,
+        chapters,
+        progress: 0,
+        downloadedHashes: new Set(),
+        queued,
+      }).menu.items.map((i) => i.label);
+    expect(labels(false)).not.toContain("Cancel all downloads");
+    expect(labels(true).slice(-3)).toEqual([
+      "Cancel this manga's downloads",
+      "Cancel all downloads",
+      "Delete downloads",
+    ]);
+  });
 });
 
 describe("deferredDownloadMenu", () => {

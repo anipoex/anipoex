@@ -1,7 +1,9 @@
 import { useValue } from "@legendapp/state/react";
 import { toast } from "@/components/ui/toast";
 import {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   chapterHash,
   deleteDownloads,
   downloadKey,
@@ -34,6 +36,10 @@ export function useChapterDownload(
       if (source) downloadOne(manga, source, chapter);
     },
     cancel: () => cancelDownload(key),
+    cancelGroup: () => {
+      if (source) cancelGroupDownloads(manga.id, source.id);
+    },
+    cancelAll: cancelAllDownloads,
     retry: () => retryDownload(key),
     pause: () => pauseDownload(key),
     resume: () => resumeDownload(key),
@@ -44,10 +50,10 @@ export function useChapterDownload(
       );
     },
   };
-  /** What the row's button does; running, local and cloud open its menu instead. */
+  /** What the row's button does; queued, running, local and cloud open its menu instead. */
   const press = {
     none: actions.download,
-    queued: actions.cancel,
+    queued: undefined,
     running: undefined,
     paused: actions.resume,
     failed: actions.retry,

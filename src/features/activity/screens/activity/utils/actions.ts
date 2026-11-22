@@ -1,5 +1,7 @@
 import {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   moveUp as moveDownloadUp,
   pauseDownload,
   pauseDownloads,
@@ -24,7 +26,9 @@ import {
 import { mediaKey } from "@/features/manga/utils/msu";
 
 export {
+  cancelAllDownloads,
   cancelDownload,
+  cancelGroupDownloads,
   clearQueue,
   moveDownloadUp,
   pauseDownload,

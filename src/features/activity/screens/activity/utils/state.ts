@@ -4,11 +4,14 @@ import { downloadQueue$ } from "@/features/downloads";
 import { activeScans$ } from "@/features/manga/state/active-scans";
 import { readingRun$ } from "@/features/manga/state/reading-queue";
 
-/** The running manga whose sources show, by manga id; not persisted. */
+/**
+ * The rows that show what's under them: a running manga's sources by manga
+ * id, a download group's chapters by group id; not persisted.
+ */
 export const expanded$ = observable<Record<string, boolean>>({});
 
-export const toggleExpanded = (mangaId: number) =>
-  expanded$[mangaId].set((open) => !open);
+export const toggleExpanded = (id: number | string) =>
+  expanded$[id].set((open) => !open);
 
 /** Whether a scan runs: of any manga, or the Reading scan. */
 export const hasScans = () =>

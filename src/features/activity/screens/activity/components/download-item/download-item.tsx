@@ -1,5 +1,5 @@
 import { Computed } from "@legendapp/state/react";
-import { Image } from "expo-image";
+import { cn } from "panelui-native/utils/cn";
 import { Button } from "panelui-web/button";
 import { Frame } from "panelui-web/frame";
 import { memo } from "react";
@@ -22,7 +22,7 @@ export interface DownloadItemProps {
   /** The download's key in the queue. */
   id: string;
   /**
-   * Its place in the section, for its corners.
+   * Its place in its group, for its corners.
    * @platform android
    */
   index?: number;
@@ -30,12 +30,11 @@ export interface DownloadItemProps {
   count?: number;
 }
 
-/** A chapter in the download queue: its progress, or why it failed. */
+/** A chapter under its download group: its progress, or why it failed. */
 export const DownloadItem = memo(function DownloadItem({
   id,
 }: DownloadItemProps) {
-  const { title, label, cover, chapter, state, line, canMoveUp } =
-    useDownloadItem(id);
+  const { label, chapter, state, line, canMoveUp } = useDownloadItem(id);
   const moves = state === "queued" && canMoveUp;
   const pausable = state === "running" || state === "paused";
 
@@ -43,26 +42,22 @@ export const DownloadItem = memo(function DownloadItem({
     <View>
       <ContextMenu items={downloadRowMenu(id, { state, canMoveUp })}>
         <Frame.Row
-          className={
-            moves || pausable || state === "failed" ? "pe-27" : "pe-17"
-          }
+          className={cn(
+            "ps-8",
+            moves || pausable || state === "failed" ? "pe-27" : "pe-17",
+          )}
         >
-          <Frame.Media>
-            <Image
-              source={cover}
-              contentFit="cover"
-              className="aspect-2/3 w-7 rounded-sm"
-            />
-          </Frame.Media>
           <Frame.Content>
-            <Frame.Title as="p">{title}</Frame.Title>
+            <Frame.Title as="p" className="font-normal">
+              {chapter}
+            </Frame.Title>
             {state === "running" ? (
               <Computed>
                 {() => {
                   const value = downloadProgress$[id].get() ?? 0;
                   return (
                     <Progress
-                      label={`${chapter} · ${Math.round(value * 100)}%`}
+                      label={`${Math.round(value * 100)}%`}
                       value={value}
                       maxValue={1}
                       size="sm"

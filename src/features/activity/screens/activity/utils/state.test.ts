@@ -19,7 +19,9 @@ const { downloadQueue$ } = await import("@/features/downloads");
 const { canMoveUp, downloadsFailed, downloadsView$, hasScans } = await import(
   "./state"
 );
-const { downloadIds } = await import("@/features/activity/utils/ids");
+const { downloadIds, groupDownloadIds } = await import(
+  "@/features/activity/utils/ids"
+);
 
 type State = "queued" | "running" | "failed";
 const entry = (key: string, order: number, state: State) => ({
@@ -48,13 +50,16 @@ describe("downloads", () => {
     expect(downloadsFailed()).toBe(true);
   });
 
-  test("list every entry by order", () => {
+  test("group by manga and source, in the order of each first chapter", () => {
     downloadQueue$.set({
       k1: entry("k1", 2, "failed"),
       k2: entry("k2", 0, "running"),
-      k3: entry("k3", 1, "queued"),
+      k3: { ...entry("k3", 1, "queued"), source: { id: "s2", name: "B" } },
+      k4: { ...entry("k4", 3, "queued"), manga: { id: 42, title: "Other" } },
     });
-    expect(downloadIds()).toBe("k2,k3,k1");
+    expect(downloadIds()).toBe("41/source-1,41/s2,42/source-1");
+    expect(groupDownloadIds("41/source-1")).toBe("k2,k1");
+    expect(groupDownloadIds("41/s2")).toBe("k3");
   });
 
   test("move up only past a queued entry", () => {

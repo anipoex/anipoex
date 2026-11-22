@@ -13,7 +13,6 @@ export function useDownloadItem(id: string) {
   const manga = useValue(item$.manga.title) ?? "";
   const number = useValue(item$.chapter.number) ?? -1;
   const name = useValue(item$.chapter.name) ?? "";
-  const cover = useValue(item$.manga.cover);
   const state = useValue(item$.state) ?? "queued";
   const error = useValue(item$.error);
   const paused = useValue(downloadsPaused$);
@@ -22,13 +21,11 @@ export function useDownloadItem(id: string) {
   const chapter = chapterLabel(number, name);
 
   return {
-    title: manga,
-    /** Names the chapter too, for the row's buttons. */
+    /** Names the manga too, for the row's buttons. */
     label: downloadTitle(manga, { number, name }),
-    cover,
     chapter,
     state,
-    line: downloadLine(chapter, state, error, paused),
+    line: downloadLine(state, error, paused),
     canMoveUp: movable,
   };
 }

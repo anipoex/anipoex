@@ -1,15 +1,8 @@
 import { Button, HStack, SwipeActions, VStack } from "@expo/ui/swift-ui";
-import {
-  clipShape,
-  foregroundStyle,
-  frame,
-  lineLimit,
-  tint,
-} from "@expo/ui/swift-ui/modifiers";
+import { foregroundStyle, lineLimit, tint } from "@expo/ui/swift-ui/modifiers";
 import { Computed } from "@legendapp/state/react";
 import { memo } from "react";
 import { ROW_FILL } from "@/components/native/swift-ui/constants";
-import { Image } from "@/components/native/swift-ui/image";
 import { Text } from "@/components/native/swift-ui/text";
 import { Icons, sfSymbol } from "@/components/ui/icon";
 import { ContextMenu } from "@/components/ui/menu";
@@ -30,24 +23,15 @@ import { useDownloadItem } from "./hooks/use-download-item";
 export const DownloadItem = memo(function DownloadItem({
   id,
 }: DownloadItemProps) {
-  const { title, cover, chapter, state, line, canMoveUp } = useDownloadItem(id);
+  const { chapter, state, line, canMoveUp } = useDownloadItem(id);
   const [primary, destructive] = useThemeColor(["primary", "destructive"]);
 
   return (
     <SwipeActions>
       <ContextMenu items={downloadRowMenu(id, { state, canMoveUp })}>
         <HStack spacing={12} modifiers={ROW_FILL}>
-          {cover ? (
-            <Image
-              source={{ uri: cover }}
-              modifiers={[
-                frame({ width: 28, height: 40 }),
-                clipShape("roundedRectangle", 5),
-              ]}
-            />
-          ) : null}
           <VStack alignment="leading" spacing={4}>
-            <Text modifiers={[lineLimit(1)]}>{title}</Text>
+            <Text modifiers={[lineLimit(1)]}>{chapter}</Text>
             {state === "running" ? (
               <Computed>
                 {() => {
@@ -59,7 +43,7 @@ export const DownloadItem = memo(function DownloadItem({
                         textStyle="subheadline"
                         modifiers={[foregroundStyle("secondary")]}
                       >
-                        {`${chapter} · ${Math.round(value * 100)}%`}
+                        {`${Math.round(value * 100)}%`}
                       </Text>
                     </VStack>
                   );

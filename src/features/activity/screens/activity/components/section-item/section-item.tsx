@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { ActivitySection } from "@/features/activity/utils/filters";
 import type { TargetKey } from "@/features/sync/state/engine";
-import { DownloadItem } from "../download-item";
+import { DownloadGroup } from "../download-group";
 import { EntryItem } from "../entry-item";
 import { QueueItem } from "../queue-item";
 import { RunningItem } from "../running-item";
@@ -35,7 +35,7 @@ export const SectionItem = memo(function SectionItem({
     case "queue":
       return <QueueItem id={id} {...place} />;
     case "downloads":
-      return <DownloadItem id={id} {...place} />;
+      return <DownloadGroup id={id} {...place} />;
     case "skipped":
       return <SkippedItem sourceId={id} {...place} />;
     case "entries":
