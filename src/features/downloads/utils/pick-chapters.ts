@@ -85,21 +85,40 @@ export function preferredScanlator(
  * chapters are hashed, so a grid card can afford it. Numbers are the source's
  * own, as the card's +N reads them.
  */
+type StoredChapter = { url: string; number: number };
+
+// A card re-reads these on every render: a stored list is replaced, never
+// edited, so its group count and each chapter's hash are worked out once.
+const groupCounts = new WeakMap<StoredChapter[], number>();
+const storedHashes = new WeakMap<StoredChapter, string>();
+
+const storedHashOf = (chapter: StoredChapter) => {
+  let hash = storedHashes.get(chapter);
+  if (hash === undefined) {
+    hash = chapterHash(chapter.url);
+    storedHashes.set(chapter, hash);
+  }
+  return hash;
+};
+
 export function pickFlags(
-  chapters: { url: string; number: number }[],
+  chapters: StoredChapter[],
   progress: number,
   downloadedHashes: Set<string>,
 ) {
   const covered = new Map<number, boolean>();
   for (const c of chapters) {
     if (!(c.number > progress) || covered.get(c.number)) continue;
-    covered.set(c.number, downloadedHashes.has(chapterHash(c.url)));
+    covered.set(c.number, downloadedHashes.has(storedHashOf(c)));
   }
-  const groups = new Set(
-    chapters.map((c) => (c.number < 0 ? c.url : c.number)),
-  );
+  let groups = groupCounts.get(chapters);
+  if (groups === undefined) {
+    groups = new Set(chapters.map((c) => (c.number < 0 ? c.url : c.number)))
+      .size;
+    groupCounts.set(chapters, groups);
+  }
   return {
     unread: [...covered.values()].some((done) => !done),
-    missing: groups.size > downloadedHashes.size,
+    missing: groups > downloadedHashes.size,
   };
 }
