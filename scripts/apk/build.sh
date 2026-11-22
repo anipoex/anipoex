@@ -33,6 +33,8 @@ version="$("$tools/aapt2" dump badging "$built" | sed -n "s/.*versionName='\([^'
 apk="android/dist/anipoex-$version.apk"
 mkdir -p android/dist
 cp "$built" "$apk"
+# R8's map, to read a crash's obfuscated stack trace from this exact build.
+cp android/app/build/outputs/mapping/release/mapping.txt "android/dist/anipoex-$version-mapping.txt"
 apksigner="$tools/apksigner"
 certs="$("$apksigner" verify --print-certs "$apk")"
 grep -q "SHA-256 digest: $SIGNING_CERT_SHA256" <<<"$certs"
