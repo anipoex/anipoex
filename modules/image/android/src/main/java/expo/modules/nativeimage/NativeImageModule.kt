@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.Glide
+import com.bumptech.glide.request.FutureTarget
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.model.GlideUrl
@@ -79,7 +81,12 @@ data class LoadEvent(@Field val cacheType: String = "none", @Field val source: L
 
 data class ErrorEvent(@Field val error: String = "") : Record
 
-private class Loaded(val url: String, val bitmap: ImageBitmap, val fade: Boolean)
+private class Loaded(
+  val url: String,
+  val bitmap: ImageBitmap,
+  val fade: Boolean,
+  val target: FutureTarget<Bitmap>
+)
 
 /**
  * An image from an https or data URL, loaded and cached by Glide (expo-image's
@@ -125,15 +132,16 @@ fun FunctionalComposableScope.ImageContent(
     val bitmap = try {
       runInterruptible(Dispatchers.IO) { target.get() }
     } catch (e: CancellationException) {
-      target.cancel(true)
+      Glide.with(context).clear(target)
       throw e
     } catch (e: Exception) {
+      Glide.with(context).clear(target)
       onError(ErrorEvent(e.cause?.message ?: e.message ?: "Could not load the image"))
       return@LaunchedEffect
     }
     // A memory hit draws at once, so a row scrolled back into view doesn't
     // fade in again.
-    loaded = Loaded(url, bitmap.asImageBitmap(), fade = from != DataSource.MEMORY_CACHE && props.transition > 0)
+    loaded = Loaded(url, bitmap.asImageBitmap(), fade = from != DataSource.MEMORY_CACHE && props.transition > 0, target)
     onLoad(
       LoadEvent(
         cacheType = when (from) {
@@ -144,6 +152,14 @@ fun FunctionalComposableScope.ImageContent(
         source = LoadedSource(url, bitmap.width, bitmap.height)
       )
     )
+  }
+
+  // A submit()'s bitmap stays held until its target is cleared, and the app
+  // context never clears it: every cover ever drawn stayed in memory. Clear
+  // it once it's no longer drawn (replaced, or the image left).
+  DisposableEffect(loaded) {
+    val shown = loaded
+    onDispose { shown?.let { Glide.with(context).clear(it.target) } }
   }
 
   // Apart from the load: a size change restarts that effect, and must not
