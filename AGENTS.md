@@ -35,6 +35,10 @@ Legend State gotchas:
 - `useValue(obs$)` of an object hands back the object Legend changes in place, so anything the Compiler derives from it keys on the same reference and keeps its first values (a Sync row stuck on "Syncing…"). Read leaves instead: `useValue(state$.lastSync)`, `useValue(() => !!busy$[key].get())` (`settings/screens/settings/components/sync-section/hooks/use-sync-section.ts`).
 - `peek()` for call-time reads (in handlers and actions), `get()` in anything that must update (`isScanning` vs `isScanBusy` in `state/probes.ts`). A `peek()` in render is worse than stale: the Compiler caches it and keeps the first render's value (`use-title-mode.ts` reads the query with `useValue`).
 
+# Memory
+
+- Measure memory with the scenario, tools and baselines in [docs/memory.md](docs/memory.md), totals on release builds only. A script reaching Metro's debugger (Hermes stats, heap snapshots) must send `Origin: http://127.0.0.1:8081`, or the socket is refused or dropped.
+
 # React Compiler
 
 - A ref written during render (`ref.current = x`) makes the Compiler skip the whole hook or component: everything it returns is new on each render and breaks `memo` downstream. Sync refs in an effect.
