@@ -13,7 +13,7 @@ How much memory the app uses on Android, iOS and desktop, what we fixed, and wha
   - **Desktop anti-bot pages:** they close sooner.
   - **Continue reading:** a change to one manga no longer redraws every card.
 - **Typical numbers:**
-  - **Android phone:** about 650 MB at startup. Before the fixes it reached 1.1 GB after a heavy scan; after a scan it hasn't been measured again on a release build.
+  - **Android phone:** about 650 MB at startup and about 1 GB after a heavy scan.
   - **Desktop:** about 510 MB at startup and 670 MB once a scan has settled.
 
 ## What we measure
@@ -27,16 +27,26 @@ The same four steps on every platform, so runs can be compared:
 
 A Planning manga is used so a scan never changes the source of something you're reading.
 
+**Turn off the manga list's filters first** (List options → Filter): a filter such as "Unread: only" shows a fraction of the cards, and step 2 then measures less. List options are kept per device, so check them on each one.
+
+The library and sources behind these numbers (2026-11-22, one AniList account synced to every device):
+
+- **Library:** 235 manga on AniList: 76 Reading, 16 Planning, 52 Completed, 41 Paused, 50 Dropped. Step 2 scrolls the 76 Reading ones.
+- **The scanned manga:** Kagurabachi, with 140 chapters, and 36–37 sources across the installed extensions: 17–19 of them available (scanned by Scan all) and the rest excluded. Search all searches all 37.
+- **Extensions installed:** 18 on the Android phone, 30–31 on the iOS simulator and desktop.
+
 ## Android
 
-Measured on a Samsung S23 Ultra with the release APK, before today's fixes:
+Measured on a Samsung S23 Ultra with the release APK, after the fixes, with no filters on the list (2026-11-23):
 
 | Step | Memory |
 |---|---|
-| Home after opening | ~640 MB |
-| Reading list scrolled | ~730 MB |
-| After Scan all + Search all | ~1 GB |
-| Back on Home | ~1.1 GB, nothing given back |
+| Home after opening | ~650 MB |
+| Reading list scrolled (all 76) | ~790 MB |
+| After Scan all + Search all | ~930 MB |
+| Back on Home, a minute later | ~980 MB |
+
+The runs before and after the fixes had the list filtered to unread manga (25–30 of the 76 cards), so they only compare with each other: the fixes took the end of a heavy scan from ~1.1 GB to ~1 GB, about 70 MB. Most of the growth is still there (see "Still open").
 
 The app never got killed for using too much memory; the crashes seen back then were a separate Compose bug.
 
@@ -47,7 +57,7 @@ What changed:
 
 ## iOS
 
-Measured on the iPhone simulator with a development build. That build compiles the app's code while it runs, which adds about 430 MB a real install doesn't have, so only the growth between steps matters here:
+Measured on the iPhone simulator with a development build. That build compiles the app's code while it runs, which adds about 430 MB a real install doesn't have, so only the growth between steps matters here. The list looks to have been filtered to unread manga in these runs too, so step 2 is likely low:
 
 | Step | Memory |
 |---|---|
@@ -82,7 +92,7 @@ The extension runtime gives memory back on desktop too (294 → 133 MB after the
 ## Still open
 
 - **The engine keeps its peak.** Making a scan and search lighter at their busiest moment would bring the most back on every platform.
-- **Android's native memory** (~350 MB in a release build) is mostly unexplained: covers are only ~100 MB of it. It needs a profiling build to see the rest.
+- **Android's native memory** (~300–350 MB in a release build) is mostly unexplained: covers are only ~100 MB of it. It needs a profiling build to see the rest.
 - **Android graphics** (~190 MB): every tab keeps its screens alive.
 - **Covers on iOS** aren't freed when their screen goes away.
 
@@ -128,7 +138,16 @@ The sections below are for agents and anyone repeating the measurements.
 <details>
 <summary><b>Detailed numbers: Android</b></summary>
 
-Release APK, PSS / RSS MB, before the fixes:
+Release APK at `debf4ce7`, no list filters, PSS / RSS MB:
+
+| Step | PSS | RSS | Biggest parts |
+|---|---|---|---|
+| 1. Home, cold start | 532 | 652 | graphics 161, native 160, Java 59 |
+| 2. Reading grid, end (76 cards) | 665 | 789 | native 228, graphics 216 |
+| 3. Scan all + Search all | 781 | 928 | native 333 |
+| 4. Home, +60 s | 836 | 982 | native 299, graphics 183, Java 102 |
+
+The runs below had the list filtered to "Unread: only" (25–30 cards at step 2; the before run most likely too). Before the fixes:
 
 | Step | PSS | RSS | Biggest parts |
 |---|---|---|---|
@@ -140,6 +159,7 @@ Release APK, PSS / RSS MB, before the fixes:
 - **Covers (`0957f3c3`):** the image module never cleared Glide's `submit()` targets. Same browse: 480 bitmaps / 119 MB → 247–268 / 88–94 MB, bounded.
 - **JS heap, dev build snapshots before/after step 3:** live self size 140 → 156 MB, spread thin (no type over 4 MB). After: `js_heapSize` 208 MB, allocated 69 MB, `js_peakAllocatedBytes` 193 MB. Hermes keeps the segments its peak needed.
 - **Title search rails (`285b1b37`):** `LazyRow.Items` with `overscanCount={2}` instead of mapping every card. Hermes reserved 208 → 180 MB, live peak 116 → 99–102 MB (two runs, same scenario).
+- **After the fixes (release APK at `debf4ce7`, filtered), PSS / RSS:** 528/645 at Home (native 167, graphics 160); 616/734 after the grid; 798/949 right after Scan all + Search all (native 301); 874/1019 on Home a minute later (native 298, graphics 195, Java 104; 4170 Views). Native at the end went 352 → 298 MB.
 - **Stores are small:** serialized, extensions 924 KB, probes 460 KB, Apollo cache 289 KB, sync meta 259 KB, chapters 169 KB.
 - **Native heap attribution:** heapprofd on the dev build disconnected (client error 2). Of 55 MB retained when it stopped, ~47 MB was React Native's JS task execution, plus ART interpreter frames (debug only). Needs a profileable release build.
 
@@ -148,7 +168,7 @@ Release APK, PSS / RSS MB, before the fixes:
 <details>
 <summary><b>Detailed numbers: iOS</b></summary>
 
-Simulator, Debug build, `footprint -p` MB (steps 3–4 minus ~100 MB from an attached debugger):
+Simulator, Debug build, `footprint -p` MB (steps 3–4 minus ~100 MB from an attached debugger; the list likely filtered to unread):
 
 | Step | Footprint | Biggest parts |
 |---|---|---|
