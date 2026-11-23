@@ -10,7 +10,8 @@ const SOLVE_MS = 60_000;
 const ASK_AFTER_MS = 15_000;
 const POLL_MS = 500;
 // A site's page stays loaded this long after its last request, then closes.
-const IDLE_MS = 10 * 60_000;
+// Each holds ~60 MB: a scan that met 14 checks kept ~830 MB for 10 minutes.
+const IDLE_MS = 3 * 60_000;
 // The clearance's own session, apart from the app's: pages are sources' sites.
 const PARTITION = "cloudflare";
 
