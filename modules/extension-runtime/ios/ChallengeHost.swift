@@ -28,6 +28,9 @@ final class ChallengeHost {
   // The solve under way per host whose page closed: a second would replace
   // the first's page mid-fetch.
   private var reopening: [String: Task<Void, Error>] = [:]
+  // One sheet at a time: a solve's dismiss closes the sheet presented over
+  // its own, which left the first stuck on "Closing".
+  private weak var shown: UIViewController?
   // Pages live in the window, off screen: WebKit pauses a page outside one.
   lazy var shelf: UIView = {
     let shelf = UIView(frame: CGRect(x: -2000, y: 0, width: 390, height: 700))
@@ -111,8 +114,9 @@ final class ChallengeHost {
         keep(view, for: host)
         return ["cookies": cookies.map(Self.setCookie), "userAgent": Self.userAgent]
       }
-      if sheet == nil, Date().timeIntervalSince(started) > Self.showAfterSeconds {
+      if sheet == nil, Date().timeIntervalSince(started) > Self.showAfterSeconds, shown?.presentingViewController == nil {
         sheet = present(view, host: host)
+        shown = sheet?.sheet
       }
       if !asked, let banner = sheet?.banner, Date().timeIntervalSince(started) > Self.askAfterSeconds {
         asked = true
