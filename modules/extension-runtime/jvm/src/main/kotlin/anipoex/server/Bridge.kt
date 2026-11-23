@@ -13,6 +13,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.lang.reflect.InvocationTargetException
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The one entry point every host calls (JNI on iOS, the stdin/stdout loop
@@ -25,15 +29,27 @@ object Bridge {
     /** Forgets the host so tests can start from an uninitialized bridge. */
     internal fun reset() { host = null }
 
+    private val running = AtomicInteger()
+    private val idle = Executors.newSingleThreadScheduledExecutor { Thread(it, "idle-gc").apply { isDaemon = true } }
+    @Volatile private var idleGc: ScheduledFuture<*>? = null
+
     @JvmStatic
-    fun call(method: String, args: String): String = try {
-        val result = runBlocking { dispatch(method, Json.parseToJsonElement(args).jsonObject) }
-        JsonObject(mapOf("result" to toJson(result))).toString()
-    } catch (e: Throwable) {
-        // A throwing constructor arrives wrapped; the app shows the cause.
-        val cause = if (e is InvocationTargetException) e.cause ?: e else e
-        cause.printStackTrace()
-        JsonObject(mapOf("error" to JsonPrimitive(cause.message ?: cause.toString()))).toString()
+    fun call(method: String, args: String): String {
+        running.incrementAndGet()
+        idleGc?.cancel(false)
+        try {
+            val result = runBlocking { dispatch(method, Json.parseToJsonElement(args).jsonObject) }
+            return JsonObject(mapOf("result" to toJson(result))).toString()
+        } catch (e: Throwable) {
+            // A throwing constructor arrives wrapped; the app shows the cause.
+            val cause = if (e is InvocationTargetException) e.cause ?: e else e
+            cause.printStackTrace()
+            return JsonObject(mapOf("error" to JsonPrimitive(cause.message ?: cause.toString()))).toString()
+        } finally {
+            // iOS's SerialGC gives memory back only after a full GC, which an
+            // idle runtime never reaches by itself.
+            if (running.decrementAndGet() == 0) idleGc = idle.schedule({ if (running.get() == 0) System.gc() }, 30, TimeUnit.SECONDS)
+        }
     }
 
     private suspend fun dispatch(method: String, args: JsonObject): Any? {

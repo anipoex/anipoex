@@ -143,7 +143,12 @@ static NSString *boot(NSURL *frameworkURL, NSURL *jarsURL, NSURL *dataURL) {
     [@"-Duser.home=" stringByAppendingString:dataURL.path],
     @"-Dfile.encoding=UTF-8",
     @"-XX:+UseSerialGC",
-    @"-Xms64m",
+    // A full GC shrinks the heap to at most 40% free in one go (default:
+    // 70%, spread over four GCs).
+    @"-XX:MinHeapFreeRatio=20",
+    @"-XX:MaxHeapFreeRatio=40",
+    @"-XX:-ShrinkHeapInSteps",
+    @"-Xms16m",
     @"-Xmx512m",
     @"-Xss8m",
     @"--enable-final-field-mutation=ALL-UNNAMED",
