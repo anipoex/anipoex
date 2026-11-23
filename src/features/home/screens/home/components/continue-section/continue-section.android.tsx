@@ -22,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import { Icon, Icons } from "@/components/ui/icon";
 import { ContextMenu } from "@/components/ui/menu";
 import { Progress } from "@/components/ui/progress";
-import type { ContinueItem } from "@/features/home/utils/continue-items";
 import { MangaMediaFragmentDoc } from "@/features/manga/graphql/manga-fragments.generated";
 import { useThemeM3Colors } from "@/hooks/use-theme/use-theme.android";
 import type { ContinueSectionProps } from "./continue-section";
@@ -44,37 +43,49 @@ export function ContinueSection({ title, items }: ContinueSectionProps) {
           keyExtractor={(item) => String(item.mangaId)}
           estimatedItemSize={CARD_WIDTH}
         >
-          {({ item }) => <ContinueCard item={item} />}
+          {({ item }) => (
+            <ContinueCard
+              mangaId={item.mangaId}
+              unread={item.unread}
+              chapterId={item.next.id}
+              chapterNumber={item.next.number}
+            />
+          )}
         </LazyRow.Items>
       </LazyRow>
     </Column>
   );
 }
 
-const ContinueCard = memo(function ContinueCard({
-  item,
-}: {
-  item: ContinueItem;
-}) {
+// Values, not the item: the list's items are rebuilt whenever one changes.
+const ContinueCard = memo(function ContinueCard(props: CardValues) {
   const { read, menu } = useContinueActions(
-    item.mangaId,
-    item.next.id,
-    item.next.number,
+    props.mangaId,
+    props.chapterId,
+    props.chapterNumber,
   );
   return (
     <ContextMenu items={menu}>
-      <Card item={item} onPress={read} />
+      <Card {...props} onPress={read} />
     </ContextMenu>
   );
 });
 
+interface CardValues {
+  mangaId: number;
+  unread: number;
+  chapterId: string;
+  chapterNumber: number;
+}
+
 /** The tonal card; `ContextMenu` hands it the long press. */
 function Card({
-  item,
+  mangaId,
+  unread,
+  chapterNumber,
   onPress,
   onLongPress,
-}: {
-  item: ContinueItem;
+}: CardValues & {
   onPress: () => void;
   onLongPress?: () => void;
 }) {
@@ -82,12 +93,12 @@ function Card({
   const { data } = useFragment({
     fragment: MangaMediaFragmentDoc,
     fragmentName: "MangaMedia",
-    from: { __typename: "Media", id: item.mangaId },
+    from: { __typename: "Media", id: mangaId },
   });
   const read = data.mediaListEntry?.progress ?? 0;
   const name = data.title?.userPreferred ?? "";
   const cover = data.coverImage?.medium;
-  const caption = `Chapter ${item.next.number} · ${item.unread} new`;
+  const caption = `Chapter ${chapterNumber} · ${unread} new`;
 
   return (
     <Row
@@ -138,10 +149,10 @@ function Card({
             Read
           </Text>
           <Badge>c.{read}</Badge>
-          <Badge color="primary">+{item.unread}</Badge>
+          <Badge color="primary">+{unread}</Badge>
         </Row>
         <Box modifiers={[padding(0, 8, 0, 0)]}>
-          <Progress value={(read / (read + item.unread)) * 100} size="sm" />
+          <Progress value={(read / (read + unread)) * 100} size="sm" />
         </Box>
       </Column>
     </Row>

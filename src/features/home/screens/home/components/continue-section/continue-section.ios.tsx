@@ -41,8 +41,14 @@ const CARD_WIDTH = 240;
 // The cover and the card's padding.
 const CARD_HEIGHT = 90;
 
+// Values, not the item: the list's items are rebuilt whenever one changes.
 const renderCard = ({ item }: { item: ContinueItem }) => (
-  <ContinueCard item={item} />
+  <ContinueCard
+    mangaId={item.mangaId}
+    unread={item.unread}
+    chapterId={item.next.id}
+    chapterNumber={item.next.number}
+  />
 );
 
 export function ContinueSection({ title, items }: ContinueSectionProps) {
@@ -85,25 +91,31 @@ export function ContinueSection({ title, items }: ContinueSectionProps) {
  * manga. Title and progress from the cache.
  */
 const ContinueCard = memo(function ContinueCard({
-  item,
+  mangaId,
+  unread,
+  chapterId,
+  chapterNumber,
 }: {
-  item: ContinueItem;
+  mangaId: number;
+  unread: number;
+  chapterId: string;
+  chapterNumber: number;
 }) {
   const { read: open, menu } = useContinueActions(
-    item.mangaId,
-    item.next.id,
-    item.next.number,
+    mangaId,
+    chapterId,
+    chapterNumber,
   );
   const overlay = useThemeColor("overlay");
   const { data } = useFragment({
     fragment: MangaMediaFragmentDoc,
     fragmentName: "MangaMedia",
-    from: { __typename: "Media", id: item.mangaId },
+    from: { __typename: "Media", id: mangaId },
   });
   const title = data.title?.userPreferred ?? "";
   const cover = data.coverImage?.medium;
   const read = data.mediaListEntry?.progress ?? 0;
-  const caption = `Ch. ${item.next.number} · ${item.unread} new`;
+  const caption = `Ch. ${chapterNumber} · ${unread} new`;
 
   return (
     <ContextMenu items={menu}>
@@ -162,9 +174,9 @@ const ContinueCard = memo(function ContinueCard({
               Read
             </Text>
             <Badge>c.{read}</Badge>
-            <Badge color="primary">+{item.unread}</Badge>
+            <Badge color="primary">+{unread}</Badge>
           </HStack>
-          <Progress value={(read / (read + item.unread)) * 100} size="sm" />
+          <Progress value={(read / (read + unread)) * 100} size="sm" />
         </VStack>
       </HStack>
     </ContextMenu>
