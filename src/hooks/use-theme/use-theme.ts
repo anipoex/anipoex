@@ -14,28 +14,21 @@ export function useThemeM3Colors(_name?: ThemeColor) {
 }
 
 export function useNativeTabsTheme(): NativeTabsProps {
-  // PanelUI's `accent` is the tinted surface a selected item sits on, not the
-  // brand — that is `primary`.
-  const [accentForeground, accent, primary, surface, mutedForeground] =
-    useThemeColor([
-      "accent-foreground",
-      "accent",
-      "primary",
-      "surface",
-      "muted-foreground",
-    ]);
+  const [primary, surface, mutedForeground] = useThemeColor([
+    "primary",
+    "surface",
+    "muted-foreground",
+  ]);
   const fontFamily = useFontFamily("medium");
 
   return {
     tintColor: primary,
     backgroundColor: surface,
-    indicatorColor: accent,
-    rippleColor: accent,
     labelStyle: {
       default: { color: mutedForeground, fontFamily },
-      selected: { color: accentForeground, fontFamily },
+      selected: { color: primary, fontFamily },
     },
-    iconColor: { default: mutedForeground, selected: accentForeground },
+    iconColor: { default: mutedForeground, selected: primary },
   };
 }
 
