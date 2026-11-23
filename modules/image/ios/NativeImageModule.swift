@@ -36,10 +36,12 @@ private let cacheTypes: [SDImageCacheType: String] = [.memory: "memory", .disk: 
 /// An image from an https or data URL, loaded and cached by SDWebImage
 /// (expo-image's engine) and drawn by SwiftUI itself: a React Native view
 /// hosted in a recycled `List` row can be taken by a row SwiftUI is
-/// removing.
+/// removing. Decoded at the size it's drawn, so it waits for a size.
 public struct ImageView: ExpoSwiftUI.View {
   @ObservedObject public var props: ImageViewProps
-  @State private var loaded: (url: String, image: UIImage, cacheType: String)?
+  @Environment(\.displayScale) private var displayScale
+  @State private var size = CGSize.zero
+  @State private var loaded: (url: String, key: String, image: UIImage, cacheType: String)?
 
   public init(props: ImageViewProps) {
     self.props = props
@@ -47,11 +49,20 @@ public struct ImageView: ExpoSwiftUI.View {
 
   public var body: some View {
     let url = props.source?.uri
+    let source = url.flatMap { URL(string: $0) }
+    let pixels = CGSize(width: (size.width * displayScale).rounded(.up), height: (size.height * displayScale).rounded(.up))
+    let context = loadContext(pixels)
+    // The thumbnail's own key, which carries its size.
+    let key = pixels.width > 0 && pixels.height > 0 ? source.flatMap { SDWebImageManager.shared.cacheKey(for: $0, context: context) } : nil
     // A memory hit draws in the first frame, so a row scrolled back into view
     // doesn't fade in again.
-    let shown = url.flatMap { url in
-      loaded?.url == url ? loaded : SDImageCache.shared.imageFromMemoryCache(forKey: url).map { (url: url, image: $0, cacheType: "memory") }
+    let hit = url.flatMap { url in
+      key.flatMap { key in
+        loaded?.key == key ? loaded : SDImageCache.shared.imageFromMemoryCache(forKey: key).map { (url: url, key: key, image: $0, cacheType: "memory") }
+      }
     }
+    // A resize keeps the old size's image until the new one loads.
+    let shown = hit ?? (loaded?.url == url ? loaded : nil)
     Color.clear
       .overlay {
         if let shown {
@@ -77,21 +88,26 @@ public struct ImageView: ExpoSwiftUI.View {
         }
       }
       .clipped()
-      .task(id: url) {
-        guard let url, shown == nil, let source = URL(string: url) else { return }
-        let context: [SDWebImageContextOption: Any]? = props.source?.headers.map { [.downloadRequestModifier: SDWebImageDownloaderRequestModifier(headers: $0)] }
+      .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
+      .task(id: key) {
+        guard let url, let key, let source, hit == nil else { return }
         let duration = props.transition / 1000
-        // A source's oversized cover would take hundreds of MB decoded: past
-        // 60 MB it decodes scaled down, keeping its aspect ratio.
-        SDWebImageManager.shared.loadImage(with: source, options: [.scaleDownLargeImages], context: context, progress: nil) { image, _, error, cacheType, _, _ in
+        // No .scaleDownLargeImages: its byte limit replaces the thumbnail size.
+        SDWebImageManager.shared.loadImage(with: source, options: [], context: context, progress: nil) { image, _, error, cacheType, _, _ in
           guard let image else {
             // A recycled row may have moved on to another url by now.
             if props.source?.uri == url { props.onError(["error": error?.localizedDescription ?? "Could not load the image"]) }
             return
           }
-          withAnimation(duration > 0 ? .easeIn(duration: duration) : nil) { loaded = (url, image, cacheTypes[cacheType] ?? "none") }
+          withAnimation(duration > 0 ? .easeIn(duration: duration) : nil) { loaded = (url, key, image, cacheTypes[cacheType] ?? "none") }
         }
       }
+  }
+
+  private func loadContext(_ pixels: CGSize) -> [SDWebImageContextOption: Any] {
+    var context: [SDWebImageContextOption: Any] = [.imageThumbnailPixelSize: NSValue(cgSize: pixels), .imageCoder: CoverCoder.shared]
+    if let headers = props.source?.headers { context[.downloadRequestModifier] = SDWebImageDownloaderRequestModifier(headers: headers) }
+    return context
   }
 
   @ViewBuilder
@@ -101,5 +117,38 @@ public struct ImageView: ExpoSwiftUI.View {
     case .contain: image.aspectRatio(contentMode: .fit)
     case .cover: image.aspectRatio(contentMode: .fill)
     }
+  }
+}
+
+/// Decodes at the smallest size that covers the thumbnail size, as Glide does
+/// on Android: SDWebImage only fits the image inside it, which left a portrait
+/// cover in a wide card half as sharp.
+private final class CoverCoder: NSObject, SDImageCoder {
+  static let shared = CoverCoder()
+
+  func canDecode(from data: Data?) -> Bool {
+    SDImageCodersManager.shared.canDecode(from: data)
+  }
+
+  func decodedImage(with data: Data?, options: [SDImageCoderOption: Any]? = nil) -> UIImage? {
+    var options = options ?? [:]
+    if let box = (options[.decodeThumbnailPixelSize] as? NSValue)?.cgSizeValue, let data,
+      let source = CGImageSourceCreateWithData(data as CFData, nil),
+      let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+      let width = properties[kCGImagePropertyPixelWidth] as? CGFloat, width > 0,
+      let height = properties[kCGImagePropertyPixelHeight] as? CGFloat, height > 0
+    {
+      let scale = max(box.width / width, box.height / height)
+      options[.decodeThumbnailPixelSize] = NSValue(cgSize: CGSize(width: (width * scale).rounded(.up), height: (height * scale).rounded(.up)))
+    }
+    return SDImageCodersManager.shared.decodedImage(with: data, options: options)
+  }
+
+  func canEncode(to format: SDImageFormat) -> Bool {
+    SDImageCodersManager.shared.canEncode(to: format)
+  }
+
+  func encodedData(with image: UIImage?, format: SDImageFormat, options: [SDImageCoderOption: Any]? = nil) -> Data? {
+    SDImageCodersManager.shared.encodedData(with: image, format: format, options: options)
   }
 }

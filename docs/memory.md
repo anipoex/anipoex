@@ -6,8 +6,9 @@ How much memory the app uses on Android, iOS and desktop, what we fixed, and wha
 
 - **The app's memory grows most during a source scan,** above all "Scan all sources" followed by "Search titles → Search all". It reads every source's chapters and searches every source's catalog at once.
 - **Most of that growth isn't data the app keeps.** The JavaScript engine (Hermes) reserves room for the busiest moment and doesn't give it back afterwards. The real fix is to make that busiest moment lighter.
-- **Five fixes landed:**
+- **Six fixes landed:**
   - **Covers on Android:** they're freed once they stop showing.
+  - **Covers on iOS:** they're decoded at the size they're shown.
   - **Title search on Android:** it only builds the result cards you can see.
   - **Extension runtime (iOS and desktop):** it gives memory back after a scan.
   - **Desktop anti-bot pages:** they close sooner.
@@ -69,6 +70,7 @@ Measured on the iPhone simulator with a development build. That build compiles t
 What changed:
 
 - **The extension runtime** kept all the memory a scan needed, forever. Now it gives it back about 30 seconds after the last source call. A minute after a scan it holds about 30 MB instead of 64, and about 44 MB instead of 73 after Search all.
+- **Covers** were decoded at the file's full size, and some sources' covers are much bigger than a card. Now each is decoded at the size it's shown: after Search all, decoded images went from ~69 to ~27 MB.
 
 ## Desktop
 
@@ -94,7 +96,6 @@ The extension runtime gives memory back on desktop too (294 → 133 MB after the
 - **The engine keeps its peak.** Making a scan and search lighter at their busiest moment would bring the most back on every platform.
 - **Android's native memory** (~300–350 MB in a release build) is mostly unexplained: covers are only ~100 MB of it. It needs a profiling build to see the rest.
 - **Android graphics** (~190 MB): every tab keeps its screens alive.
-- **Covers on iOS** aren't freed when their screen goes away.
 
 Working notes live in bead `anipoex-fn4e`.
 
@@ -188,7 +189,8 @@ Simulator, Debug build, `footprint -p` MB (steps 3–4 minus ~100 MB from an att
   | Search all, Home, +60 s | 72.6 MB | 43.5 MB |
   | Peak during work | 64 MB | 75 MB |
 
-- **Other:** decoded covers 11 → 44 MB held after leaving; the challenge page's WebKit ~21 MB stays alive (`idleSeconds` = 10 min in `ChallengeHost.swift`).
+- **Covers:** `modules/image/ios/NativeImageModule.swift` waits for the view's size and decodes at it, covering the view as Glide does (`CoverCoder`). Kagurabachi, Search all, rails scrolled, then Home +20 s; `vmmap` CG image + CG raster data, footprint: before 76 MB / 1036 → 42 + 27 = 69 MB / 1013 on Home; after 36 MB / 1001 → 15 + 12 = 27 MB / 975. AniList's own covers are already smaller than their cards, so the library screens don't change.
+- **Other:** the challenge page's WebKit ~21 MB stays alive (`idleSeconds` = 10 min in `ChallengeHost.swift`).
 
 </details>
 

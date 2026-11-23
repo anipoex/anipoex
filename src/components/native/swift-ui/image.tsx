@@ -14,8 +14,7 @@ import type {
  * The expo-image props the native images take, with expo-image's names and
  * events, so a screen moves to them by its import. The Compose Image takes the
  * same. `onLoad`'s width and height are the decoded image's, which keeps the
- * aspect ratio but can be smaller: Android decodes at the drawn size, iOS
- * scales down what would pass 60 MB.
+ * aspect ratio but can be smaller: both decode at the drawn size.
  */
 export interface NativeImageProps
   extends Pick<ExpoImageProps, "blurRadius" | "onLoad" | "onError"> {
