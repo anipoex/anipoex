@@ -143,14 +143,30 @@ export function RailContent({
         horizontalArrangement={{ spacedBy: 10 }}
         contentPadding={{ start: GUTTER, end: GUTTER, bottom: 12 }}
       >
-        {items.map((item, i) => [
-          <Menu key={item.manga.url} items={menu(item)}>
-            <RailCard item={item} headers={source.headers} />
-          </Menu>,
-          item.current && i === 0 && items.length > 1 && (
-            <VerticalDivider key="divider" modifiers={[height(COVER.height)]} />
-          ),
-        ])}
+        {/* Recycled: a Search all mounted every card of every source's rail at
+          once, which raised the JS heap's peak. */}
+        <LazyRow.Items
+          data={items}
+          keyExtractor={(item) => item.manga.url}
+          estimatedItemSize={COVER.width}
+          overscanCount={2}
+        >
+          {({ item, index }) => {
+            const card = (
+              <Menu items={menu(item)}>
+                <RailCard item={item} headers={source.headers} />
+              </Menu>
+            );
+            return item.current && index === 0 && items.length > 1 ? (
+              <Row horizontalArrangement={{ spacedBy: 10 }}>
+                {card}
+                <VerticalDivider modifiers={[height(COVER.height)]} />
+              </Row>
+            ) : (
+              card
+            );
+          }}
+        </LazyRow.Items>
         {(rail.hasNextPage || rail.loadingMore) && (
           // Loads as it scrolls into view; a tap retries a page that failed.
           <Box
